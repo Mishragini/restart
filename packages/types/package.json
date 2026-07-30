@@ -1,0 +1,19 @@
+{
+  "name": "@repo/types",
+  "type": "module",
+  "scripts": {
+    "dev": "tsc --watch",
+    "build": "tsc"
+  },
+  "exports": {
+    "./signup": "./src/signup.ts",
+    "./signin": "./src/signin.ts"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "typescript": "latest"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
+  }
+}

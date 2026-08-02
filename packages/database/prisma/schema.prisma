@@ -12,56 +12,99 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
 model User {
-	id String @id
-	name String
-	email String @unique
-	emailVerified Boolean
-	image String?
-	createdAt DateTime @db.Timestamptz(3)
-	updatedAt DateTime @db.Timestamptz(3)
-  session Session[]
-  account Account[]
-	@@map("user")
+  id            String    @id
+  name          String
+  email         String    @unique
+  emailVerified Boolean
+  image         String?
+  role          Role
+  createdAt     DateTime  @db.Timestamptz(3)
+  updatedAt     DateTime  @db.Timestamptz(3)
+  session       Session[]
+  account       Account[]
+  market        Market[]
+
+  @@map("user")
 }
 
 model Session {
-	id String @id
-	user User @relation(fields: [userId], references: [id])
-	userId String 
-	token String @unique
-	expiresAt DateTime @db.Timestamptz(3)
-	ipAddress String?
-	userAgent String?
-	createdAt DateTime @db.Timestamptz(3)
-	updatedAt DateTime @db.Timestamptz(3)
-	@@map("session")
+  id        String   @id
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  token     String   @unique
+  expiresAt DateTime @db.Timestamptz(3)
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @db.Timestamptz(3)
+  updatedAt DateTime @db.Timestamptz(3)
+
+  @@map("session")
 }
 
 model Account {
-	id String @id
-	user User @relation(fields: [userId], references: [id])
-	userId String
-	accountId String
-	providerId String
-	accessToken String?
-	refreshToken String?
-	accessTokenExpiresAt DateTime? @db.Timestamptz(3)
-	refreshTokenExpiresAt DateTime? @db.Timestamptz(3)
-	scope String?
-	idToken String?
-	password String?
-	createdAt DateTime @db.Timestamptz(3)
-	updatedAt DateTime @db.Timestamptz(3)
-	@@map("account")
+  id                    String    @id
+  user                  User      @relation(fields: [userId], references: [id])
+  userId                String
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  accessTokenExpiresAt  DateTime? @db.Timestamptz(3)
+  refreshTokenExpiresAt DateTime? @db.Timestamptz(3)
+  scope                 String?
+  idToken               String?
+  password              String?
+  createdAt             DateTime  @db.Timestamptz(3)
+  updatedAt             DateTime  @db.Timestamptz(3)
+
+  @@map("account")
 }
 
 model Verification {
-	id String @id
-	identifier String
-	value String
-	expiresAt DateTime @db.Timestamptz(3)
-	createdAt DateTime @db.Timestamptz(3)
-	updatedAt DateTime @db.Timestamptz(3)
-	@@map("verification")
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime @db.Timestamptz(3)
+  createdAt  DateTime @db.Timestamptz(3)
+  updatedAt  DateTime @db.Timestamptz(3)
+
+  @@map("verification")
+}
+
+model Category {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  markets   Market[]
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  @@map("category")
+}
+
+enum MarketStatus {
+  ACTIVE
+  CLOSED
+  CANCELLED
+  RESOLVED
+}
+
+model Market {
+  id            String       @id @default(uuid())
+  title         String
+  description   String?
+  sourceOfTruth String
+  status        MarketStatus @default(ACTIVE)
+  categories    Category[]
+  endsAt        DateTime     @db.Timestamptz(3)
+  createdById   String
+  createdBy     User         @relation(references: [id], fields: [createdById])
+  createdAt     DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime     @default(now()) @db.Timestamptz(3)
+
+  @@map("market")
 }

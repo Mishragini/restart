@@ -35,77 +35,79 @@ export const Login = () => {
         return;
       }
       toast.success("Logged in successfully!");
-      navigate("/");
+      navigate("/dashboard");
     },
   });
   return (
-    <Card className="min-w-md sm:min-w-lg md:min-w-xl gap-24 p-16">
-      <CardHeader className="w-full flex flex-col items-center justify-center">
-        <CardTitle className="text-2xl font-heading">Welcome back</CardTitle>
-        <CardDescription className="text-sm font-light">
-          Login to your account
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        <Button
-          variant="outline"
-          className="w-full h-12"
-          onClick={async () => {
-            await googleAuth();
-          }}
-        >
-          Login with Google
-        </Button>
-
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <hr className="flex-1 border-t" />
-          or
-          <hr className="flex-1 border-t" />
-        </div>
-        <form
-          onSubmit={handleSubmit((data) => signinMutation.mutate(data))}
-          className="flex flex-col gap-4"
-        >
-          <Field>
-            <FieldLabel htmlFor="input-field-email">Email</FieldLabel>
-            <Input
-              {...register("email", { required: true })}
-              id="input-field-email"
-              type="email"
-              placeholder="johndoe@example.com"
-              required
-            />
-            {errors.email?.message && (
-              <p className="text-red-500">{errors.email.message}</p>
-            )}
-          </Field>
-          <Field>
-            <FieldLabel htmlFor="input-field-password">Password</FieldLabel>
-            <Input
-              {...register("password", { required: true })}
-              id="input-field-password"
-              type="password"
-              required
-            />
-            {errors.password?.message && (
-              <p className="text-red-500">{errors.password.message}</p>
-            )}
-          </Field>
+    <div className="auth">
+      <Card className="min-w-md sm:min-w-lg md:min-w-xl gap-24 p-16">
+        <CardHeader className="w-full flex flex-col items-center justify-center">
+          <CardTitle className="text-2xl font-heading">Welcome back</CardTitle>
+          <CardDescription className="text-sm font-light">
+            Login to your account
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
           <Button
-            type="submit"
+            variant="outline"
             className="w-full h-12"
-            disabled={signinMutation.isPending}
+            onClick={async () => {
+              await googleAuth();
+            }}
           >
-            {signinMutation.isPending ? "Logging in..." : "Login"}
+            Login with Google
           </Button>
-        </form>
-      </CardContent>
-      <CardFooter className="flex justify-center gap-1 text-sm bg-transparent border-0">
-        <span>Don't have an account?</span>
-        <Link to="/signup" className="underline">
-          Signup
-        </Link>
-      </CardFooter>
-    </Card>
+
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <hr className="flex-1 border-t" />
+            or
+            <hr className="flex-1 border-t" />
+          </div>
+          <form
+            onSubmit={handleSubmit((data) => signinMutation.mutate(data))}
+            className="flex flex-col gap-4"
+          >
+            <Field>
+              <FieldLabel htmlFor="input-field-email">Email</FieldLabel>
+              <Input
+                {...register("email", { required: true })}
+                id="input-field-email"
+                type="email"
+                placeholder="johndoe@example.com"
+                required
+              />
+              {errors.email?.message && (
+                <p className="text-red-500">{errors.email.message}</p>
+              )}
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="input-field-password">Password</FieldLabel>
+              <Input
+                {...register("password", { required: true })}
+                id="input-field-password"
+                type="password"
+                required
+              />
+              {errors.password?.message && (
+                <p className="text-red-500">{errors.password.message}</p>
+              )}
+            </Field>
+            <Button
+              type="submit"
+              className="w-full h-12"
+              disabled={signinMutation.isPending}
+            >
+              {signinMutation.isPending ? "Logging in..." : "Login"}
+            </Button>
+          </form>
+        </CardContent>
+        <CardFooter className="flex justify-center gap-1 text-sm bg-transparent border-0">
+          <span>Don't have an account?</span>
+          <Link to="/signup" className="underline">
+            Signup
+          </Link>
+        </CardFooter>
+      </Card>
+    </div>
   );
 };

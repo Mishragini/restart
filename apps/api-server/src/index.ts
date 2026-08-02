@@ -4,6 +4,8 @@ import { FRONTEND_BASE_URL, PORT } from "./config.js"
 import { auth } from "./lib/auth.js";
 import cors from "cors"
 import { pfpRouter } from "./routes/pfp.js";
+import { marketRouter } from "./routes/market.js";
+import { categoryRouter } from "./routes/category.js";
 
 const app = express()
 console.log("FRONTEND_BASE_URL", FRONTEND_BASE_URL)
@@ -31,6 +33,9 @@ app.get("/health", (req, res) => {
 })
 
 app.use("/api/v1/pfp", pfpRouter)
+app.use("/api/v1/markets", marketRouter)
+app.use("/api/v1/categories", categoryRouter)
+
 
 app.listen(PORT, () => {
     console.log(`Server is listening on ${PORT}`)

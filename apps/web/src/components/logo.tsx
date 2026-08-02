@@ -8,7 +8,7 @@ export const Logo = ({ className, ...props }: LogoProps) => {
   return (
     <div
       className={cn(
-        "inline-flex select-none items-center gap-[0.3em] font-semibold uppercase tracking-[0.2em] text-white",
+        "inline-flex select-none items-center gap-[0.3em] font-semibold uppercase tracking-[0.2em]",
         className,
       )}
       {...props}

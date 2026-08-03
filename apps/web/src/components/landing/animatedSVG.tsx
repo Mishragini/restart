@@ -1,12 +1,86 @@
 import { motion } from "motion/react";
 
+/** Fraction of a path lit by the travelling highlight. */
+const PULSE_LENGTH = 0.22;
+
+interface NeonPathProps {
+  d: string;
+  color: string;
+  filter: string;
+  strokeWidth?: number;
+  /** 1 runs from the path's start point toward its end, -1 runs the other way. */
+  direction?: 1 | -1;
+  duration?: number;
+  className?: string;
+  transform?: string;
+}
+
+/**
+ * A neon run: a solid base stroke with a highlight travelling along it.
+ *
+ * The base stroke is what keeps the run reading as one connected line — the
+ * highlight only ever adds brightness, it never opens a gap in the middle.
+ *
+ * pathLength + pathSpacing sum to 1, so `motion` normalises the path to a
+ * single dash period regardless of its actual length. Animating pathOffset
+ * across exactly 0 → ±1 therefore lands back where it started and the loop
+ * repeats without the jump you get from an arbitrary strokeDashoffset range.
+ */
+const NeonPath = ({
+  d,
+  color,
+  filter,
+  strokeWidth = 2.5,
+  direction = 1,
+  duration = 2.4,
+  className,
+  transform,
+}: NeonPathProps) => (
+  <g filter={filter} className={className} transform={transform}>
+    <path
+      d={d}
+      stroke={color}
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      fill="none"
+      opacity={0.6}
+    />
+    <motion.path
+      d={d}
+      stroke={color}
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      fill="none"
+      initial={{
+        pathLength: PULSE_LENGTH,
+        pathSpacing: 1 - PULSE_LENGTH,
+        pathOffset: 0,
+      }}
+      animate={{
+        pathLength: PULSE_LENGTH,
+        pathSpacing: 1 - PULSE_LENGTH,
+        pathOffset: [0, direction],
+      }}
+      transition={{ duration, repeat: Infinity, ease: "linear" }}
+    />
+  </g>
+);
+
+/**
+ * The neon runs are authored against background.png's own 873x1802 pixel grid,
+ * so `preserveAspectRatio` has to mirror the <img>'s `object-cover object-top`
+ * exactly — `slice` is cover, `xMidYMin` is the top anchor. Any mismatch and
+ * the runs drift off the grooves they are meant to trace.
+ */
 export const AnimatedSVG = ({ ...props }) => {
   return (
     <motion.svg
       width="100%"
       height="100%"
       viewBox="0 0 873 1802"
-      preserveAspectRatio="xMidYMid meet"
+      preserveAspectRatio="xMidYMin slice"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={props.className}
@@ -294,205 +368,65 @@ export const AnimatedSVG = ({ ...props }) => {
         </filter>
       </defs>
 
-      <g transform="scale(0.6)">
-        {/* GREEN — top-left side*/}
-        <g filter="url(#glow)">
-          <path
-            d="M0 275H330C355 275 370 260 370 235V0"
-            stroke="#4DF2D9"
-            strokeWidth="2.5"
-            opacity={0.25}
-          />
-          <motion.path
-            d="M0 275H330C355 275 370 260 370 235V0"
-            stroke="#4DF2D9"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeDasharray="560 50"
-            animate={{ strokeDashoffset: [-500, 20] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          />
-        </g>
+      {/*
+        Every run below traces a seam that is actually etched into
+        background.png, in that image's own pixel coordinates. The seams were
+        measured off the asset rather than eyeballed — the panel network in the
+        top half is:
 
-        {/* GREEN #2 — stepped/jagged path, animates left→right */}
-        <g transform="translate(0,450) scale(1.6)" filter="url(#glow)">
-          <path
-            d="M0 29H158C172 29 180 40 180 64V114L205 129V203L267 226H335L365 165"
-            stroke="#4DF2D9"
-            strokeWidth="2"
-            opacity={0.25}
-          />
-          <motion.path
-            d="M0 29H158C172 29 180 40 180 64V114L205 129V203L267 226H335L365 165"
-            stroke="#4DF2D9"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeDasharray="560 50"
-            animate={{ strokeDashoffset: [20, -500] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          />
-        </g>
+          verticals    x=221 (y 0-149, rounds into y=166)
+                       x=245 (y 0-150, chamfers to 130,266)
+                       x=127 (y 267-996)
+                       x=553 (y 477-686)
+                       x=741 (y 0-1617)
+          horizontals  y=166 (x 0-208)   y=267 (x 0-127)
+                       y=477 (x 127-738) y=686 (x 130-741)
+          chamfers     (245,148)->(130,266)   (127,476)->(22,581)
+                       (873,26)->(741,158)    (741,412)->(676,477)
+                       (741,480)->(873,612)
 
-        {/* GREEN #3 — orthogonal connector (graph card → yes button), animates bottom→top */}
-        <g filter="url(#glow)" className="translate-y-30 md:translate-y-0">
-          <path
-            d="M300 1950 H70 Q30 1950 30 1910 V920 Q30 880 70 880 H544 Q584 880 584 840 V480"
-            stroke="#4DF2D9"
-            strokeWidth="2.5"
-            opacity={0.25}
-            fill="none"
-          />
-          <motion.path
-            d="M300 1950 H70 Q30 1950 30 1910 V920 Q30 880 70 880 H544 Q584 880 584 840 V480"
-            stroke="#4DF2D9"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            fill="none"
-            strokeDasharray="560 50"
-            animate={{ strokeDashoffset: [20, -500] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          />
-        </g>
+        Because the runs and the artwork now share one coordinate space, a run
+        stays welded to its seam at every viewport size — which is what lets the
+        separate mobile/desktop copies of each path go away.
+      */}
 
-        <g filter="url(#glow)" className="hidden md:block ">
-          <path
-            d="M1150 1950 H1260 Q1300 1950 1300 1910 V1410 Q1300 1370 1260 1370 H920"
-            stroke="#4DF2D9"
-            strokeWidth="2.5"
-            opacity={0.25}
-            fill="none"
-          />
-          <motion.path
-            d="M1150 1950 H1260 Q1300 1950 1300 1910 V1410 Q1300 1370 1260 1370 H920"
-            stroke="#4DF2D9"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            fill="none"
-            strokeDasharray="560 50"
-            animate={{ strokeDashoffset: [20, -500] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          />
-        </g>
-        <g filter="url(#glow)" className="md:hidden">
-          <path
-            d="M1250 2050 H1360 Q1400 2050 1400 2010 V1170 Q1400 1130 1360 1130 H920"
-            stroke="#4DF2D9"
-            strokeWidth="2.5"
-            opacity={0.25}
-            fill="none"
-          />
-          <motion.path
-            d="M1250 2050 H1360 Q1400 2050 1400 2010 V1170 Q1400 1130 1360 1130 H920"
-            stroke="#4DF2D9"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            fill="none"
-            strokeDasharray="560 50"
-            animate={{ strokeDashoffset: [20, -500] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          />
-        </g>
+      {/* TEAL — in from the left edge, along the y=166 seam, rounds up the x=221 riser. */}
+      <NeonPath
+        d="M0 166 H207 Q221 166 221 152 V0"
+        color="#4DF2D9"
+        filter="url(#glow)"
+        direction={-1}
+      />
 
-        {/* GREEN #4 — from Sentiment Tracker text upward, animates bottom→top
-            (uses #glow-line instead of #glow — see filter comment above) */}
-        <g filter="url(#glow-line)" className="hidden md:block">
-          <path
-            d="M705 1350 V930"
-            stroke="#4DF2D9"
-            strokeWidth="2.5"
-            opacity={0.25}
-            fill="none"
-          />
-          <motion.path
-            d="M705 1350 V930"
-            stroke="#4DF2D9"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            fill="none"
-            strokeDasharray="560 50"
-            animate={{ strokeDashoffset: [20, -500] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          />
-        </g>
-        <g filter="url(#glow-line)" className=" md:hidden">
-          <path
-            d="M705 1110 V930"
-            stroke="#4DF2D9"
-            strokeWidth="2.5"
-            opacity={0.25}
-            fill="none"
-          />
-          <motion.path
-            d="M705 1110 V930"
-            stroke="#4DF2D9"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            fill="none"
-            strokeDasharray="560 50"
-            animate={{ strokeDashoffset: [20, -500] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          />
-        </g>
+      {/* TEAL — the long left run: down the x=245 riser, across the chamfer onto
+          the x=127 vertical, right along the y=477 seam, then down the x=553 riser. */}
+      <NeonPath
+        d="M245 0 V148 L129 264 V466 Q127 477 138 477 H543 Q553 477 553 488 V686"
+        color="#4DF2D9"
+        filter="url(#glow)"
+      />
 
-        {/* ORANGE — mirror image of green, taller vertical drop */}
-        <g transform="translate(1455,0) scale(-1,1)" filter="url(#glow-orange)">
-          <path
-            d="M0 400H330C355 400 370 385 370 360V0"
-            stroke="#FF9466"
-            strokeWidth="2.5"
-            opacity={0.25}
-          />
-          <motion.path
-            d="M0 400H330C355 400 370 385 370 360V0"
-            stroke="#FF9466"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeDasharray="560 50"
-            animate={{ strokeDashoffset: [-500, 20] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          />
-        </g>
+      {/* TEAL — in from the left edge on the lower chamfer, meeting the run above. */}
+      <NeonPath
+        d="M0 603 L127 476"
+        color="#4DF2D9"
+        filter="url(#glow)"
+      />
 
-        {/* ORANGE #2 — L-path from right → up to Trade No button */}
-        <g filter="url(#glow-orange)" className="hidden md:block">
-          <path
-            d="M1455 720 H910 Q870 720 870 680 V500"
-            stroke="#FF9466"
-            strokeWidth="2.5"
-            opacity={0.25}
-            fill="none"
-          />
-          <motion.path
-            d="M1455 720 H910 Q870 720 870 680 V500"
-            stroke="#FF9466"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            fill="none"
-            strokeDasharray="560 50"
-            animate={{ strokeDashoffset: [20, -500] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          />
-        </g>
-        <g filter="url(#glow-orange)" className="md:hidden">
-          <path
-            d="M1455 720 H910 Q870 720 870 680 V600"
-            stroke="#FF9466"
-            strokeWidth="2.5"
-            opacity={0.25}
-            fill="none"
-          />
-          <motion.path
-            d="M1455 720 H910 Q870 720 870 680 V600"
-            stroke="#FF9466"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            fill="none"
-            strokeDasharray="560 50"
-            animate={{ strokeDashoffset: [20, -500] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          />
-        </g>
-      </g>
+      {/* ORANGE — in at the top-right corner chamfer, down the x=741 spine,
+          out along the chamfer onto the y=477 seam. */}
+      <NeonPath
+        d="M873 26 L741 158 V412 L676 477"
+        color="#FF9466"
+        filter="url(#glow-orange)"
+      />
+
+      {/* ORANGE — in from the right edge on the lower chamfer, down to the y=686 seam. */}
+      <NeonPath
+        d="M873 612 L741 480 V686 H563"
+        color="#FF9466"
+        filter="url(#glow-orange)"
+      />
     </motion.svg>
   );
 };

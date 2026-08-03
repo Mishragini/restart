@@ -16,9 +16,11 @@ import { signin, signInSchema } from "@repo/types/signin";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import { useAuthErrorFromSearchParams } from "@/hooks/useAuthErrorFromSearchParams";
 
 export const Login = () => {
   const navigate = useNavigate();
+  useAuthErrorFromSearchParams();
   const {
     register,
     formState: { errors },
@@ -36,6 +38,11 @@ export const Login = () => {
       }
       toast.success("Logged in successfully!");
       navigate("/dashboard");
+    },
+    onError: (error) => {
+      console.error(error);
+      toast.error(error.message);
+      return;
     },
   });
   return (

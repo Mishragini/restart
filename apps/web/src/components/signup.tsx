@@ -25,10 +25,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheckBig, Loader2, TriangleAlert } from "lucide-react";
+import { useAuthErrorFromSearchParams } from "@/hooks/useAuthErrorFromSearchParams";
 
 export const Signup = () => {
   let navigate = useNavigate();
+  useAuthErrorFromSearchParams();
   const [preview, setPreview] = useState<null | string>(null);
+
   const {
     register,
     formState: { errors },

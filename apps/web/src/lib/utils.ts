@@ -17,7 +17,7 @@ export const googleAuth = async () => {
     const response = await authClient.signIn.social({
         provider: "google",
         callbackURL: `${window.location.origin}/dashboard`,
-        errorCallbackURL: "/signup",
+        errorCallbackURL: window.location.href,
         // newUserCallbackURL: "/welcome",
         // disableRedirect: true,
     });

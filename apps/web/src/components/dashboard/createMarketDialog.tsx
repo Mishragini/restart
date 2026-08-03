@@ -12,12 +12,22 @@ import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 import { Field, FieldError, FieldGroup, FieldLabel } from "../ui/field";
 import { useForm } from "react-hook-form";
-import { MarketSchema, type market } from "@repo/types/market";
+import { CreateMarketSchema, type CreateMarketInput } from "@repo/types/market";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useMutationState } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { cn, createMarket } from "@/lib/utils";
 import { CategoryCombobox } from "./categoryCombobox";
+import { authClient } from "@/lib/auth-client";
+import { LoadingDots } from "../loaders";
+
+// Current local time formatted for a datetime-local input (YYYY-MM-DDTHH:mm)
+const nowAsDatetimeLocal = () => {
+  const now = new Date();
+  return new Date(now.getTime() - now.getTimezoneOffset() * 60_000)
+    .toISOString()
+    .slice(0, 16);
+};
 
 interface CreateMarketDialogProps
   extends React.ComponentPropsWithoutRef<typeof Button> {
@@ -25,6 +35,9 @@ interface CreateMarketDialogProps
 }
 
 export const CreateMarketDialog = ({ ...props }: CreateMarketDialogProps) => {
+  const { data: session, isPending: isSessionPending } =
+    authClient.useSession();
+
   const [open, setOpen] = useState(false);
   const {
     register,
@@ -32,8 +45,8 @@ export const CreateMarketDialog = ({ ...props }: CreateMarketDialogProps) => {
     setValue,
     reset,
     formState: { errors },
-  } = useForm<market>({
-    resolver: zodResolver(MarketSchema),
+  } = useForm<CreateMarketInput>({
+    resolver: zodResolver(CreateMarketSchema),
     defaultValues: { categoryIds: [] },
   });
 
@@ -62,6 +75,17 @@ export const CreateMarketDialog = ({ ...props }: CreateMarketDialogProps) => {
       filters: { mutationKey: ["create-category"], status: "pending" },
     }).length > 0;
 
+  if (isSessionPending) {
+    return (
+      <div className="screen-center">
+        <LoadingDots />
+      </div>
+    );
+  }
+  if (session?.user.role !== "ADMIN") {
+    return <></>;
+  }
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
@@ -84,6 +108,7 @@ export const CreateMarketDialog = ({ ...props }: CreateMarketDialogProps) => {
                 id="title"
                 placeholder="Will BTC cross $150k by Dec 31?"
                 {...register("title")}
+                className="w-full"
               />
               <FieldError errors={[errors.title]} />
             </Field>
@@ -93,6 +118,7 @@ export const CreateMarketDialog = ({ ...props }: CreateMarketDialogProps) => {
                 id="description"
                 placeholder="Optional details and resolution criteria..."
                 {...register("description")}
+                className="w-full"
               />
               <FieldError errors={[errors.description]} />
             </Field>
@@ -103,6 +129,7 @@ export const CreateMarketDialog = ({ ...props }: CreateMarketDialogProps) => {
                 type="url"
                 placeholder="https://..."
                 {...register("sourceOfTruth")}
+                className="w-full"
               />
               <FieldError errors={[errors.sourceOfTruth]} />
             </Field>
@@ -111,7 +138,9 @@ export const CreateMarketDialog = ({ ...props }: CreateMarketDialogProps) => {
               <Input
                 id="endsAt"
                 type="datetime-local"
+                min={nowAsDatetimeLocal()}
                 {...register("endsAt")}
+                className="w-full"
               />
               <FieldError errors={[errors.endsAt]} />
             </Field>

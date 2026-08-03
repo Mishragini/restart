@@ -8,6 +8,7 @@ import { Toaster } from "./components/ui/sonner";
 import LandingPage from "./components/landing";
 import { Navbar } from "./components/navabar";
 import Dashboard from "./components/dashboard";
+import MarketPage from "./components/market";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +52,10 @@ export const router = createBrowserRouter([
           {
             path: "/dashboard",
             element: <Dashboard />,
+          },
+          {
+            path: "/market/:marketId",
+            element: <MarketPage />,
           },
         ],
       },

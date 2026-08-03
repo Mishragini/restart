@@ -3,7 +3,7 @@ import { twMerge } from "tailwind-merge"
 import { authClient } from "./auth-client";
 import { type signup } from "@repo/types/signup"
 import { type signin } from "@repo/types/signin"
-import { type market } from "@repo/types/market"
+import { MarketStatus, type CreateMarketInput, type Market } from "@repo/types/market"
 
 import axios from "axios"
 import { router } from "@/main";
@@ -82,8 +82,25 @@ export const fetchCategories = async () => {
     return data.categories
 }
 
+export const createCategory = async (name: string) => {
+    const api_response = await axios.post(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/categories/create`, { name }, { withCredentials: true })
+    return api_response
+}
 
-export const createMarket = async (payload: market) => {
+export const fetchMarkets = async (status: MarketStatus | null, categoryIds: string[] = []): Promise<Market[]> => {
+    const api_response = await axios.get(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/markets`, {
+        // axios omits params with undefined values, so no key is sent when a filter is off
+        params: {
+            status: status ?? undefined,
+            categoryIds: categoryIds.length ? categoryIds.join(",") : undefined
+        },
+        withCredentials: true
+    })
+    return api_response.data.data
+}
+
+
+export const createMarket = async (payload: CreateMarketInput) => {
     const { data } = await axios.post(
         `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/markets/create`,
         // datetime-local gives "YYYY-MM-DDTHH:mm"; normalize to ISO for the server
@@ -91,9 +108,4 @@ export const createMarket = async (payload: market) => {
         { withCredentials: true }
     )
     return data
-}
-
-export const createCategory = async (name: string) => {
-    const api_response = await axios.post(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/categories/create`, { name }, { withCredentials: true })
-    return api_response
 }

@@ -7,6 +7,7 @@ import {
   ComboboxCollection,
   ComboboxContent,
   ComboboxEmpty,
+  ComboboxInput,
   ComboboxItem,
   ComboboxList,
   ComboboxValue,
@@ -15,7 +16,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { PlusIcon } from "lucide-react";
-import { createCategory, fetchCategories } from "@/lib/utils";
+import { cn, createCategory, fetchCategories } from "@/lib/utils";
 
 interface Category {
   id: string;
@@ -26,10 +27,21 @@ interface Category {
 
 interface CategoryComboboxProps {
   onSelectionChange?: (ids: string[]) => void;
+  // When false, hides the "Create ..." option (e.g. when used as a filter)
+  allowCreate?: boolean;
+  placeholder?: string;
+  className?: string;
+  // Renders the input + list in place (no chips, no floating popup),
+  // for embedding inside an existing popup like the filters popover
+  inline?: boolean;
 }
 
 export const CategoryCombobox = ({
   onSelectionChange,
+  allowCreate = true,
+  placeholder = "Search or create a category...",
+  className,
+  inline = false,
 }: CategoryComboboxProps) => {
   const queryClient = useQueryClient();
   const anchor = useComboboxAnchor();
@@ -85,10 +97,46 @@ export const CategoryCombobox = ({
     [search],
   );
 
+  const list = (
+    <>
+      {/* The default empty styles rely on the floating popup wrapper, so force display when inline */}
+      <ComboboxEmpty className={cn(inline && "flex")}>
+        {isPending
+          ? "Loading categories"
+          : isError
+            ? "Failed to load categories"
+            : "No categories found"}
+      </ComboboxEmpty>
+      <ComboboxList className={cn(inline && "max-h-40")}>
+        <ComboboxCollection>
+          {(item: Category) => (
+            <ComboboxItem key={item.id} value={item}>
+              {item.name}
+            </ComboboxItem>
+          )}
+        </ComboboxCollection>
+        {allowCreate && search && !exists && (
+          <ComboboxItem
+            value={createOption}
+            className="bg-card cursor-pointer text-primary data-highlighted:text-primary [&_svg]:text-primary border-t"
+          >
+            <PlusIcon className="size-4" />
+            <span>
+              Create "<span className="font-semibold">{search}</span>"
+            </span>
+          </ComboboxItem>
+        )}
+      </ComboboxList>
+    </>
+  );
+
   return (
     <Combobox
       multiple
       autoHighlight
+      // Base UI requires `open` to be pinned when rendering the list inline
+      inline={inline}
+      open={inline ? true : undefined}
       items={categories ?? []}
       value={value}
       inputValue={search}
@@ -104,51 +152,39 @@ export const CategoryCombobox = ({
         createCategoryMutation(create.name);
       }}
     >
-      <ComboboxChips ref={anchor} className="w-full max-w-xs">
-        <ComboboxValue>
-          {(values: Category[]) => (
-            <React.Fragment>
-              {values.map((value) => (
-                <ComboboxChip key={value.id}>{value.name}</ComboboxChip>
-              ))}
-              <ComboboxChipsInput
-                placeholder={
-                  values.length === 0 ? "Search or create a category..." : ""
-                }
-              />
-            </React.Fragment>
-          )}
-        </ComboboxValue>
-      </ComboboxChips>
-      <ComboboxContent anchor={anchor}>
-        <ComboboxEmpty>
-          {isPending
-            ? "Loading categories"
-            : isError
-              ? "Failed to load categories"
-              : "No categories found"}
-        </ComboboxEmpty>
-        <ComboboxList>
-          <ComboboxCollection>
-            {(item: Category) => (
-              <ComboboxItem key={item.id} value={item}>
-                {item.name}
-              </ComboboxItem>
+      {inline ? (
+        <>
+          <ComboboxInput
+            showTrigger={false}
+            placeholder={placeholder}
+            className={cn(
+              "m-1 h-8 w-[calc(100%-(--spacing(2)))] border-input/30 bg-input/30 shadow-none",
+              className,
             )}
-          </ComboboxCollection>
-          {search && !exists && (
-            <ComboboxItem
-              value={createOption}
-              className="bg-card cursor-pointer text-primary data-highlighted:text-primary [&_svg]:text-primary border-t"
-            >
-              <PlusIcon className="size-4" />
-              <span>
-                Create "<span className="font-semibold">{search}</span>"
-              </span>
-            </ComboboxItem>
-          )}
-        </ComboboxList>
-      </ComboboxContent>
+          />
+          {list}
+        </>
+      ) : (
+        <>
+          <ComboboxChips ref={anchor} className={cn("w-full", className)}>
+            <ComboboxValue>
+              {(values: Category[]) => (
+                <React.Fragment>
+                  {values.map((value) => (
+                    <ComboboxChip key={value.id} className="shrink-0">
+                      {value.name}
+                    </ComboboxChip>
+                  ))}
+                  <ComboboxChipsInput
+                    placeholder={values.length === 0 ? placeholder : ""}
+                  />
+                </React.Fragment>
+              )}
+            </ComboboxValue>
+          </ComboboxChips>
+          <ComboboxContent anchor={anchor}>{list}</ComboboxContent>
+        </>
+      )}
     </Combobox>
   );
 };

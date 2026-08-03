@@ -183,11 +183,54 @@
   @apply h-12 w-12 md:w-24 md:h-24;
 }
 
+/* @utility (not a plain class) so these can also be @apply'd elsewhere, e.g. .peach-btn */
+@utility mint-glow-border {
+  @apply border-2 border-mint shadow-[0_0_28px_rgba(143,227,182,0.35)];
+}
+
+@utility peach-glow-border {
+  @apply border-2 border-peach shadow-[0_0_28px_rgba(237,168,116,0.35)];
+}
+
+.market-card {
+  @apply bg-card h-full w-full cursor-pointer
+         transition-all duration-300 ease-out
+         group-hover:-translate-y-1.5 group-hover:scale-[1.02]
+         group-focus-visible:-translate-y-1.5 group-focus-visible:scale-[1.02];
+}
+
+.market-card-mint {
+  @apply mint-glow-border group-hover:shadow-[0_0_44px_rgba(143,227,182,0.55)];
+}
+
+.market-card-peach {
+  @apply peach-glow-border group-hover:shadow-[0_0_44px_rgba(237,168,116,0.55)];
+}
+
+.status-badge {
+  @apply text-xs font-semibold uppercase tracking-wide;
+}
+
+.category-chip {
+  @apply rounded-full border border-white/10 bg-muted px-2.5 py-0.5 text-xs text-muted-foreground;
+}
+
+.market-card-footer {
+  @apply flex items-center justify-between text-xs text-muted-foreground;
+}
+
+/* Hidden by default, slides in when the parent `group` is hovered/focused */
+.market-card-cta {
+  @apply inline-flex items-center gap-1 font-semibold
+         opacity-0 translate-x-1 transition-all duration-300
+         group-hover:opacity-100 group-hover:translate-x-0
+         group-focus-visible:opacity-100 group-focus-visible:translate-x-0;
+}
+
 .peach-btn {
   @apply rounded-full 
-   border-2 border-peach 
+   peach-glow-border 
     text-peach 
-   shadow-[0_0_28px_rgba(237,168,116,0.35)] 
    transition-transform duration-200 
    hover:scale-[1.03] 
    focus-visible:outline-offset-2 focus-visible:outline-peach 

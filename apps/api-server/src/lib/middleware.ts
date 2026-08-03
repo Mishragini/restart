@@ -5,7 +5,8 @@ import { type User } from "@repo/types/user"
 import z, { ZodType } from "zod"
 
 export interface AuthenticatedRequest extends Request {
-    user?: User
+    user?: User,
+    validatedData?: unknown
 }
 
 export const authMiddleware = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
@@ -34,15 +35,16 @@ export const adminMiddleware = async (req: AuthenticatedRequest, res: Response, 
 }
 
 //middleware currying
-export const validate = (validationSchema: ZodType) =>
+export const validate = (validationSchema: ZodType, source: "body" | "query" = "body") =>
     (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
 
-        const result = validationSchema.safeParse(req.body)
+        const result = validationSchema.safeParse(req[source])
 
         if (!result.success) {
             console.error(z.flattenError(result.error).fieldErrors)
             res.status(400).json({ error: 'Bad Request' })
             return
         }
+        req.validatedData = result.data
         next()
     }

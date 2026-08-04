@@ -26,6 +26,7 @@ import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheckBig, Loader2, TriangleAlert } from "lucide-react";
 import { useAuthErrorFromSearchParams } from "@/hooks/useAuthErrorFromSearchParams";
+import { Role } from "@repo/types/user";
 
 export const Signup = () => {
   let navigate = useNavigate();
@@ -40,7 +41,7 @@ export const Signup = () => {
     control,
   } = useForm<signup>({
     resolver: zodResolver(signupSchema),
-    defaultValues: { role: "USER" },
+    defaultValues: { role: Role.USER },
   });
 
   const signupMutation = useMutation({
@@ -199,8 +200,8 @@ export const Signup = () => {
                       <SelectValue placeholder="Select a role" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="USER">User</SelectItem>
-                      <SelectItem value="ADMIN">Admin</SelectItem>
+                      <SelectItem value={Role.USER}>User</SelectItem>
+                      <SelectItem value={Role.ADMIN}>Admin</SelectItem>
                     </SelectContent>
                   </Select>
                 )}

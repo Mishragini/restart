@@ -1,4 +1,5 @@
 import z from "zod";
+import { Role } from "./user";
 
 const signupSchema = z.object({
     email: z.email("Enter a valid email"),
@@ -9,7 +10,7 @@ const signupSchema = z.object({
         .regex(/[0-9]/, "Must contain a number"),
     name: z.string().min(2, "Must be at least 2 characters"),
     image: z.string().optional(),
-    role: z.enum(["USER", "ADMIN"], { message: "Select a role" })
+    role: z.enum([Role.USER, Role.ADMIN], { message: "Select a role" })
 })
 
 type signup = z.infer<typeof signupSchema>

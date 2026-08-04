@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { cn, createMarket } from "@/lib/utils";
 import { CategoryCombobox } from "./categoryCombobox";
 import { authClient } from "@/lib/auth-client";
+import { Role } from "@repo/types/user";
 
 // Current local time formatted for a datetime-local input (YYYY-MM-DDTHH:mm)
 const nowAsDatetimeLocal = () => {
@@ -79,7 +80,7 @@ export const CreateMarketDialog = ({ ...props }: CreateMarketDialogProps) => {
       filters: { mutationKey: ["create-category"], status: "pending" },
     }).length > 0;
 
-  if (session?.user.role !== "ADMIN") {
+  if (session?.user.role !== Role.ADMIN) {
     return null;
   }
 

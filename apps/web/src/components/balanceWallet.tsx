@@ -21,7 +21,14 @@ import {
   InputGroupInput,
   InputGroupText,
 } from "@/components/ui/input-group";
-import { cn, fetchInrBalance, formatInr, onRampInr } from "@/lib/utils";
+import {
+  BalanceSummary,
+  BalanceSummaryLabel,
+  BalanceSummaryRow,
+  BalanceSummaryValue,
+} from "@/components/balanceSummary";
+import { AmountPresets } from "@/components/amountPresets";
+import { fetchInrBalance, formatInr, onRampInr } from "@/lib/utils";
 
 const PRESET_AMOUNTS = [100, 500, 1000, 2000, 5000] as const;
 
@@ -91,44 +98,35 @@ export const BalanceWallet = () => {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="balance-summary">
-          <div className="balance-summary-row">
-            <span className="balance-summary-label">Available</span>
-            <span className="balance-summary-value">
+        <BalanceSummary>
+          <BalanceSummaryRow>
+            <BalanceSummaryLabel>Available</BalanceSummaryLabel>
+            <BalanceSummaryValue>
               {formatInr(balance?.available ?? 0)}
-            </span>
-          </div>
+            </BalanceSummaryValue>
+          </BalanceSummaryRow>
           {(balance?.locked ?? 0) > 0 && (
-            <div className="balance-summary-row">
-              <span className="balance-summary-label">Locked in orders</span>
-              <span className="balance-summary-locked">
+            <BalanceSummaryRow>
+              <BalanceSummaryLabel>Locked in orders</BalanceSummaryLabel>
+              <BalanceSummaryValue tone="peach">
                 {formatInr(balance?.locked ?? 0)}
-              </span>
-            </div>
+              </BalanceSummaryValue>
+            </BalanceSummaryRow>
           )}
-        </div>
+        </BalanceSummary>
 
         <form onSubmit={handleSubmit((data) => onRampMutation(data))}>
           <FieldGroup>
             <Field>
               <FieldLabel>Quick add</FieldLabel>
-              <div className="amount-presets">
-                {PRESET_AMOUNTS.map((amount) => (
-                  <button
-                    key={amount}
-                    type="button"
-                    className={cn(
-                      "amount-preset",
-                      selectedAmount === amount && "amount-preset-active",
-                    )}
-                    onClick={() =>
-                      setValue("amount", amount, { shouldValidate: true })
-                    }
-                  >
-                    {formatInr(amount)}
-                  </button>
-                ))}
-              </div>
+              <AmountPresets
+                amounts={PRESET_AMOUNTS}
+                value={selectedAmount}
+                onSelect={(amount) =>
+                  setValue("amount", amount, { shouldValidate: true })
+                }
+                formatLabel={formatInr}
+              />
             </Field>
 
             <Field>

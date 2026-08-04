@@ -1,10 +1,9 @@
 import { NextFunction, Request, Response } from "express";
 import { auth } from "./auth";
 import { fromNodeHeaders } from "better-auth/node";
-import { type User } from "@repo/types/user"
+import { Role, type User } from "@repo/types/user"
 import z, { ZodType } from "zod"
 import { Session } from "better-auth";
-import { Role } from "@repo/db";
 
 export interface AuthenticatedRequest extends Request {
     user?: User,
@@ -27,7 +26,7 @@ export const authMiddleware = async (req: AuthenticatedRequest, res: Response, n
 
 export const requireRole = (roles: Role[]) =>
     (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-        if (!req.user || !roles.includes(req.user.role as Role)) {
+        if (!req.user || !roles.includes(req.user.role)) {
             res.status(403).json({ error: "Forbidden" });
             return;
         }

@@ -1,5 +1,6 @@
 import { createAuthClient } from "better-auth/react"
 import { inferAdditionalFields } from "better-auth/client/plugins"
+import { Role } from "@repo/types/user"
 
 export const authClient = createAuthClient({
     /** The base URL of the server (optional if you're using the same domain) */
@@ -9,9 +10,9 @@ export const authClient = createAuthClient({
         inferAdditionalFields({
             user: {
                 role: {
-                    type: "string",
+                    type: [Role.USER, Role.ADMIN],
                     required: true,
-                    defaultValue: "USER",
+                    defaultValue: Role.USER,
                     input: true
                 }
             }

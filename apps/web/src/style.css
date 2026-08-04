@@ -338,6 +338,57 @@
          shadow-[0_0_18px_rgba(143,227,182,0.25)];
 }
 
+.market-page {
+  @apply flex w-full flex-col gap-6 p-4 md:p-6;
+}
+
+.market-header {
+  @apply flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between;
+}
+
+.market-header-info {
+  @apply flex min-w-0 flex-1 flex-col gap-2;
+}
+
+.market-header-title {
+  @apply text-2xl font-semibold tracking-tight md:text-3xl;
+}
+
+.market-header-description {
+  @apply text-sm text-muted-foreground md:text-base;
+}
+
+.market-header-meta-row {
+  @apply flex flex-wrap items-center gap-x-4 gap-y-1;
+}
+
+.market-header-source {
+  @apply inline-flex w-fit items-center gap-1.5
+         text-sm text-mint
+         transition-opacity hover:opacity-80;
+}
+
+.market-header-meta {
+  @apply text-sm text-muted-foreground;
+}
+
+.market-header-actions {
+  @apply flex shrink-0 items-center gap-3;
+}
+
+.market-grid {
+  @apply grid gap-4 lg:grid-cols-[1fr_320px];
+}
+
+.market-panel {
+  @apply flex min-h-64 items-start justify-between
+         rounded-xl border border-white/10 bg-card p-4;
+}
+
+.market-panel-label {
+  @apply text-sm text-muted-foreground;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

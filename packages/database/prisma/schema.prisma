@@ -18,24 +18,26 @@ enum Role {
 }
 
 model User {
-  id            String    @id
+  id            String         @id
   name          String
-  email         String    @unique
+  email         String         @unique
   emailVerified Boolean
   image         String?
   role          Role
-  createdAt     DateTime  @db.Timestamptz(3)
-  updatedAt     DateTime  @db.Timestamptz(3)
+  createdAt     DateTime       @db.Timestamptz(3)
+  updatedAt     DateTime       @db.Timestamptz(3)
   session       Session[]
   account       Account[]
   market        Market[]
   inrBalance    InrBalance?
+  stockBalance  StockBalance[]
+
   @@map("user")
 }
 
 model Session {
   id        String   @id
-  user      User     @relation(fields: [userId], references: [id] ,onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String
   token     String   @unique
   expiresAt DateTime @db.Timestamptz(3)
@@ -49,7 +51,7 @@ model Session {
 
 model Account {
   id                    String    @id
-  user                  User      @relation(fields: [userId], references: [id] ,onDelete: Cascade)
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId                String
   accountId             String
   providerId            String
@@ -94,27 +96,48 @@ enum MarketStatus {
 }
 
 model Market {
-  id            String       @id @default(uuid())
+  id            String         @id @default(uuid())
   title         String
   description   String?
   sourceOfTruth String
-  status        MarketStatus @default(ACTIVE)
+  status        MarketStatus   @default(ACTIVE)
+  outcome       Side?
   categories    Category[]
-  endsAt        DateTime     @db.Timestamptz(3)
+  endsAt        DateTime       @db.Timestamptz(3)
+  stockBalances StockBalance[]
   createdById   String
-  createdBy     User         @relation(references: [id], fields: [createdById])
-  createdAt     DateTime     @default(now()) @db.Timestamptz(3)
-  updatedAt     DateTime     @default(now()) @db.Timestamptz(3)
+  createdBy     User           @relation(references: [id], fields: [createdById])
+  createdAt     DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime       @updatedAt @db.Timestamptz(3)
 
   @@map("market")
 }
 
-
 model InrBalance {
-  id String @id@default(uuid())
-  locked Int @default(0)
-  available Int @default(0)
-  userId String @unique
-  user User @relation(fields: [userId],references: [id], onDelete: Cascade)
+  id        String @id @default(uuid())
+  locked    Int    @default(0)
+  available Int    @default(0)
+  userId    String @unique
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@map("inrBalance")
+}
+
+enum Side {
+  Yes
+  No
+}
+
+model StockBalance {
+  id        String @id @default(uuid())
+  side      Side
+  available Int    @default(0)
+  locked    Int    @default(0)
+  userId    String
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  marketId  String
+  market    Market @relation(fields: [marketId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, marketId, side])
+  @@map("stockBalance")
 }

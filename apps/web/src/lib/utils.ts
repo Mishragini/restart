@@ -3,7 +3,7 @@ import { twMerge } from "tailwind-merge"
 import { authClient } from "./auth-client";
 import { type signup } from "@repo/types/signup"
 import { type signin } from "@repo/types/signin"
-import { MarketStatus, type CreateMarketInput, type Market } from "@repo/types/market"
+import { MarketStatus, type CreateMarketInput, type Market, type MintInput, type UpdateMarketStatusInput } from "@repo/types/market"
 import type { InrBalance, OnRampInr } from "@repo/types/balance"
 
 import axios from "axios"
@@ -111,6 +111,17 @@ export const createMarket = async (payload: CreateMarketInput) => {
     return data
 }
 
+export const fetchMarket = async (marketId: string): Promise<Market> => {
+    const { data } = await axios.get(
+        `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/markets/${marketId}`,
+        { withCredentials: true }
+    )
+    return data.data
+}
+
+export const formatMarketEndsAt = (endsAt: string) =>
+    new Date(endsAt).toLocaleString()
+
 export const formatInr = (amount: number) =>
     `₹${amount.toLocaleString("en-IN", {
         minimumFractionDigits: 0,
@@ -130,6 +141,30 @@ export const onRampInr = async (payload: OnRampInr): Promise<InrBalance> => {
         `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/balance/webhook`,
         payload,
         { withCredentials: true }
+    )
+    return data.data
+}
+
+/** ₹10 per Yes+No pair — matches api-server mint cost. */
+export const MINT_COST_PER_PAIR_INR = 10
+
+export const mintMarket = async (payload: MintInput) => {
+    const { data } = await axios.post(
+        `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/markets/mint`,
+        payload,
+        { withCredentials: true }
+    )
+    return data.data
+}
+
+export const updateMarketStatus = async (
+    marketId: string,
+    payload: UpdateMarketStatusInput,
+): Promise<Market> => {
+    const { data } = await axios.patch(
+        `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/markets/${marketId}/status`,
+        payload,
+        { withCredentials: true },
     )
     return data.data
 }

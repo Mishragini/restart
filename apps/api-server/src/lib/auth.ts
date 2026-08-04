@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "@repo/db"
+import { Role } from "@repo/types/user";
 import { FRONTEND_BASE_URL, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } from "../config.js";
 
 export const auth = betterAuth({
@@ -19,9 +20,9 @@ export const auth = betterAuth({
     user: {
         additionalFields: {
             role: {
-                type: "string",
+                type: [Role.USER, Role.ADMIN],
                 required: true,
-                defaultValue: "USER",
+                defaultValue: Role.USER,
                 input: true
             }
         }

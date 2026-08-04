@@ -1,3 +1,8 @@
+export enum Role {
+    USER = "USER",
+    ADMIN = "ADMIN"
+}
+
 export type User = {
     id: string;
     createdAt: Date;
@@ -6,5 +11,5 @@ export type User = {
     emailVerified: boolean;
     name: string;
     image?: string | null | undefined;
-    role: string;
+    role: Role;
 }

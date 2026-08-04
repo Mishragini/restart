@@ -9,7 +9,8 @@ import {
   CardContent,
   CardFooter,
 } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { StatusBadge } from "@/components/StatusBadge";
+import { cn, formatMarketEndsAt } from "@/lib/utils";
 import { MarketStatus, type Market } from "@repo/types/market";
 
 export const MarketCard = ({ market }: { market: Market }) => {
@@ -34,14 +35,7 @@ export const MarketCard = ({ market }: { market: Market }) => {
             </CardDescription>
           )}
           <CardAction>
-            <span
-              className={cn(
-                "status-badge",
-                isActive ? "text-mint" : "text-peach",
-              )}
-            >
-              {market.status}
-            </span>
+            <StatusBadge status={market.status} />
           </CardAction>
         </CardHeader>
         {market.categories.length > 0 && (
@@ -54,7 +48,7 @@ export const MarketCard = ({ market }: { market: Market }) => {
           </CardContent>
         )}
         <CardFooter className="market-card-footer">
-          <span>Ends {new Date(market.endsAt).toLocaleString()}</span>
+          <span>Ends {formatMarketEndsAt(market.endsAt)}</span>
           <span
             className={cn(
               "market-card-cta",

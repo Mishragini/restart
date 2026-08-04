@@ -1,8 +1,9 @@
 import { Router } from "express";
-import { adminMiddleware, AuthenticatedRequest, validate } from "../lib/middleware";
+import { adminMiddleware, AuthenticatedRequest, authMiddleware, validate } from "../lib/middleware";
 import { User } from "@repo/types/user";
 import { prisma } from "@repo/db";
 import { CreateMarketSchema, FetchMarketSchema, type CreateMarketInput, type FetchMarketInput } from "@repo/types/market";
+import { closeExpiredMarkets } from "../jobs/closeExpiredMarkets";
 
 export const marketRouter: Router = Router()
 
@@ -33,9 +34,11 @@ marketRouter.post("/create", adminMiddleware, validate(CreateMarketSchema), asyn
     }
 })
 
-marketRouter.get("/", adminMiddleware, validate(FetchMarketSchema, "query"), async (req: AuthenticatedRequest, res) => {
+marketRouter.get("/", authMiddleware, validate(FetchMarketSchema, "query"), async (req: AuthenticatedRequest, res) => {
     try {
         const { status, categoryIds } = req.validatedData as FetchMarketInput
+
+        await closeExpiredMarkets()
 
         const markets = await prisma.market.findMany({
             where: {
@@ -58,7 +61,7 @@ marketRouter.get("/", adminMiddleware, validate(FetchMarketSchema, "query"), asy
     }
 })
 
-marketRouter.get("/:marketId", adminMiddleware, async (req: AuthenticatedRequest, res) => {
+marketRouter.get("/:marketId", authMiddleware, async (req: AuthenticatedRequest, res) => {
     try {
         const { marketId } = req.params as { marketId: string }
 

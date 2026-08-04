@@ -6,6 +6,8 @@ import cors from "cors"
 import { pfpRouter } from "./routes/pfp.js";
 import { marketRouter } from "./routes/market.js";
 import { categoryRouter } from "./routes/category.js";
+import { schedule } from 'node-cron'
+import { closeExpiredMarkets } from "./jobs/closeExpiredMarkets.js";
 
 const app = express()
 console.log("FRONTEND_BASE_URL", FRONTEND_BASE_URL)
@@ -39,4 +41,13 @@ app.use("/api/v1/categories", categoryRouter)
 
 app.listen(PORT, () => {
     console.log(`Server is listening on ${PORT}`)
+})
+
+
+schedule('0 0 0 * * *', async () => {
+    try {
+        await closeExpiredMarkets()
+    } catch (error) {
+        console.log(error)
+    }
 })

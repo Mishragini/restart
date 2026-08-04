@@ -1,13 +1,13 @@
 import { Router } from "express";
-import { adminMiddleware, AuthenticatedRequest, authMiddleware, validate } from "../lib/middleware";
+import { AuthenticatedRequest, authMiddleware, requireRole, validate } from "../lib/middleware";
 import { User } from "@repo/types/user";
-import { prisma } from "@repo/db";
+import { prisma, Role } from "@repo/db";
 import { CreateMarketSchema, FetchMarketSchema, type CreateMarketInput, type FetchMarketInput } from "@repo/types/market";
 import { closeExpiredMarkets } from "../jobs/closeExpiredMarkets";
 
 export const marketRouter: Router = Router()
 
-marketRouter.post("/create", adminMiddleware, validate(CreateMarketSchema), async (req: AuthenticatedRequest, res) => {
+marketRouter.post("/create", authMiddleware, requireRole([Role.ADMIN]), validate(CreateMarketSchema), async (req: AuthenticatedRequest, res) => {
     try {
         const { title, description, sourceOfTruth, categoryIds, endsAt } = req.validatedData as CreateMarketInput
         const { id: userId } = req.user as User

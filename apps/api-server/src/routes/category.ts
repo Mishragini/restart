@@ -1,13 +1,13 @@
 import { Router } from "express";
-import { adminMiddleware, AuthenticatedRequest, validate } from "../lib/middleware";
-import { prisma } from "@repo/db";
-import { CategorySchema } from "@repo/types/category";
+import { requireRole, AuthenticatedRequest, validate, authMiddleware } from "../lib/middleware";
+import { prisma, Role } from "@repo/db";
+import { category, CategorySchema } from "@repo/types/category";
 
 export const categoryRouter: Router = Router()
 
-categoryRouter.post("/create", adminMiddleware, validate(CategorySchema), async (req: AuthenticatedRequest, res) => {
+categoryRouter.post("/create", authMiddleware, requireRole([Role.ADMIN]), validate(CategorySchema), async (req: AuthenticatedRequest, res) => {
     try {
-        const { name } = req.body
+        const { name } = req.validatedData as category
 
         const dbResponse = await prisma.category.create({
             data: {
@@ -22,7 +22,7 @@ categoryRouter.post("/create", adminMiddleware, validate(CategorySchema), async 
     }
 })
 
-categoryRouter.get("/", adminMiddleware, async (req, res) => {
+categoryRouter.get("/", authMiddleware, async (req, res) => {
     try {
         const db_response = await prisma.category.findMany({})
         res.json({ message: "Categories fetched successfully", categories: db_response })

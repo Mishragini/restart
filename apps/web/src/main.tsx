@@ -9,10 +9,9 @@ import LandingPage from "./components/landing";
 import { Navbar } from "./components/navabar";
 import Dashboard from "./components/dashboard";
 import MarketPage from "./components/market";
+import { GuestOnly, RequireAuth } from "./components/auth/RequireAuth";
 
 const queryClient = new QueryClient();
-
-const App = () => <LandingPage />;
 
 const Root = () => (
   <QueryClientProvider client={queryClient}>
@@ -35,27 +34,37 @@ export const router = createBrowserRouter([
     element: <Root />,
     children: [
       {
-        path: "/",
-        element: <App />,
-      },
-      {
-        path: "/login",
-        element: <Login />,
-      },
-      {
-        path: "/signup",
-        element: <Signup />,
-      },
-      {
-        element: <LayoutWithNavbar />,
+        element: <GuestOnly />,
         children: [
           {
-            path: "/dashboard",
-            element: <Dashboard />,
+            path: "/",
+            element: <LandingPage />,
           },
           {
-            path: "/market/:marketId",
-            element: <MarketPage />,
+            path: "/login",
+            element: <Login />,
+          },
+          {
+            path: "/signup",
+            element: <Signup />,
+          },
+        ],
+      },
+      {
+        element: <RequireAuth />,
+        children: [
+          {
+            element: <LayoutWithNavbar />,
+            children: [
+              {
+                path: "/dashboard",
+                element: <Dashboard />,
+              },
+              {
+                path: "/market/:marketId",
+                element: <MarketPage />,
+              },
+            ],
           },
         ],
       },

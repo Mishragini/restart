@@ -32,5 +32,20 @@ export const auth = betterAuth({
             clientSecret: GOOGLE_CLIENT_SECRET
         }
     },
-    trustedOrigins: [FRONTEND_BASE_URL]
+    trustedOrigins: [FRONTEND_BASE_URL],
+    databaseHooks: {
+        user: {
+            create: {
+                after: async (user) => {
+                    await prisma.inrBalance.create({
+                        data: {
+                            user: {
+                                connect: { id: user.id }
+                            }
+                        }
+                    })
+                }
+            }
+        }
+    }
 });

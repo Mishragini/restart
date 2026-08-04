@@ -29,13 +29,13 @@ model User {
   session       Session[]
   account       Account[]
   market        Market[]
-
+  inrBalance    InrBalance?
   @@map("user")
 }
 
 model Session {
   id        String   @id
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id] ,onDelete: Cascade)
   userId    String
   token     String   @unique
   expiresAt DateTime @db.Timestamptz(3)
@@ -49,7 +49,7 @@ model Session {
 
 model Account {
   id                    String    @id
-  user                  User      @relation(fields: [userId], references: [id])
+  user                  User      @relation(fields: [userId], references: [id] ,onDelete: Cascade)
   userId                String
   accountId             String
   providerId            String
@@ -107,4 +107,14 @@ model Market {
   updatedAt     DateTime     @default(now()) @db.Timestamptz(3)
 
   @@map("market")
+}
+
+
+model InrBalance {
+  id String @id@default(uuid())
+  locked Int @default(0)
+  available Int @default(0)
+  userId String @unique
+  user User @relation(fields: [userId],references: [id], onDelete: Cascade)
+  @@map("inrBalance")
 }

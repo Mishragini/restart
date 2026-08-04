@@ -4,6 +4,7 @@ import { authClient } from "./auth-client";
 import { type signup } from "@repo/types/signup"
 import { type signin } from "@repo/types/signin"
 import { MarketStatus, type CreateMarketInput, type Market } from "@repo/types/market"
+import type { InrBalance, OnRampInr } from "@repo/types/balance"
 
 import axios from "axios"
 import { router } from "@/main";
@@ -108,4 +109,27 @@ export const createMarket = async (payload: CreateMarketInput) => {
         { withCredentials: true }
     )
     return data
+}
+
+export const formatInr = (amount: number) =>
+    `₹${amount.toLocaleString("en-IN", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+    })}`
+
+export const fetchInrBalance = async (): Promise<InrBalance> => {
+    const { data } = await axios.get(
+        `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/balance`,
+        { withCredentials: true }
+    )
+    return data.data
+}
+
+export const onRampInr = async (payload: OnRampInr): Promise<InrBalance> => {
+    const { data } = await axios.post(
+        `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/balance/webhook`,
+        payload,
+        { withCredentials: true }
+    )
+    return data.data
 }

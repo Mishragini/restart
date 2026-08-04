@@ -23,19 +23,21 @@ export const MarketCard = ({ market }: { market: Market }) => {
       <Card
         className={cn(
           "market-card",
-          isActive ? "market-card-mint" : "market-card-peach"
+          isActive ? "market-card-mint" : "market-card-peach",
         )}
       >
         <CardHeader>
           <CardTitle>{market.title}</CardTitle>
           {market.description && (
-            <CardDescription>{market.description}</CardDescription>
+            <CardDescription>
+              {market.description.slice(0, 100) + "....."}
+            </CardDescription>
           )}
           <CardAction>
             <span
               className={cn(
                 "status-badge",
-                isActive ? "text-mint" : "text-peach"
+                isActive ? "text-mint" : "text-peach",
               )}
             >
               {market.status}
@@ -56,7 +58,7 @@ export const MarketCard = ({ market }: { market: Market }) => {
           <span
             className={cn(
               "market-card-cta",
-              isActive ? "text-mint" : "text-peach"
+              isActive ? "text-mint" : "text-peach",
             )}
           >
             View market

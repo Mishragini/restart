@@ -14,12 +14,15 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "../ui/field";
 import { useForm } from "react-hook-form";
 import { CreateMarketSchema, type CreateMarketInput } from "@repo/types/market";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useMutationState } from "@tanstack/react-query";
+import {
+  useMutation,
+  useMutationState,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { toast } from "sonner";
 import { cn, createMarket } from "@/lib/utils";
 import { CategoryCombobox } from "./categoryCombobox";
 import { authClient } from "@/lib/auth-client";
-import { LoadingDots } from "../loaders";
 
 // Current local time formatted for a datetime-local input (YYYY-MM-DDTHH:mm)
 const nowAsDatetimeLocal = () => {
@@ -35,8 +38,8 @@ interface CreateMarketDialogProps
 }
 
 export const CreateMarketDialog = ({ ...props }: CreateMarketDialogProps) => {
-  const { data: session, isPending: isSessionPending } =
-    authClient.useSession();
+  const { data: session } = authClient.useSession();
+  const queryClient = useQueryClient();
 
   const [open, setOpen] = useState(false);
   const {
@@ -53,6 +56,7 @@ export const CreateMarketDialog = ({ ...props }: CreateMarketDialogProps) => {
   const { mutate: createMarketMutation, isPending } = useMutation({
     mutationFn: createMarket,
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["markets"] });
       toast.success("Market created!");
       reset();
       setOpen(false);
@@ -75,15 +79,8 @@ export const CreateMarketDialog = ({ ...props }: CreateMarketDialogProps) => {
       filters: { mutationKey: ["create-category"], status: "pending" },
     }).length > 0;
 
-  if (isSessionPending) {
-    return (
-      <div className="screen-center">
-        <LoadingDots />
-      </div>
-    );
-  }
   if (session?.user.role !== "ADMIN") {
-    return <></>;
+    return null;
   }
 
   return (

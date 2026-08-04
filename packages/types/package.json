@@ -10,7 +10,8 @@
     "./signin": "./src/signin.ts",
     "./user": "./src/user.ts",
     "./market": "./src/market.ts",
-    "./category": "./src/category.ts"
+    "./category": "./src/category.ts",
+    "./balance": "./src/balance.ts"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

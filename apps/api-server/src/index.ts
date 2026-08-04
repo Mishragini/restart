@@ -6,6 +6,7 @@ import cors from "cors"
 import { pfpRouter } from "./routes/pfp.js";
 import { marketRouter } from "./routes/market.js";
 import { categoryRouter } from "./routes/category.js";
+import { inrBalanceRouter } from "./routes/balance.js";
 import { schedule } from 'node-cron'
 import { closeExpiredMarkets } from "./jobs/closeExpiredMarkets.js";
 
@@ -37,6 +38,7 @@ app.get("/health", (req, res) => {
 app.use("/api/v1/pfp", pfpRouter)
 app.use("/api/v1/markets", marketRouter)
 app.use("/api/v1/categories", categoryRouter)
+app.use("/api/v1/balance", inrBalanceRouter)
 
 
 app.listen(PORT, () => {

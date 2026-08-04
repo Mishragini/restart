@@ -3,10 +3,13 @@ import { auth } from "./auth";
 import { fromNodeHeaders } from "better-auth/node";
 import { type User } from "@repo/types/user"
 import z, { ZodType } from "zod"
+import { Session } from "better-auth";
+import { Role } from "@repo/db";
 
 export interface AuthenticatedRequest extends Request {
     user?: User,
-    validatedData?: unknown
+    validatedData?: unknown,
+    session?: Session
 }
 
 export const authMiddleware = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
@@ -17,22 +20,19 @@ export const authMiddleware = async (req: AuthenticatedRequest, res: Response, n
         res.status(401).json({ error: "Unauthorized" })
         return;
     }
-    req.user = session.user
+    req.user = session.user;
+    req.session = session.session;
     next()
 }
 
-
-export const adminMiddleware = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-    const session = await auth.api.getSession({
-        headers: fromNodeHeaders(req.headers)
-    })
-    if (!session || session.user.role !== "ADMIN") {
-        res.status(403).json({ error: "Forbidden! Admin access required." })
-        return;
+export const requireRole = (roles: Role[]) =>
+    (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+        if (!req.user || !roles.includes(req.user.role as Role)) {
+            res.status(403).json({ error: "Forbidden" });
+            return;
+        }
+        next()
     }
-    req.user = session.user
-    next()
-}
 
 //middleware currying
 export const validate = (validationSchema: ZodType, source: "body" | "query" = "body") =>

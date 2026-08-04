@@ -216,7 +216,7 @@
 }
 
 .market-card-footer {
-  @apply flex items-center justify-between text-xs text-muted-foreground;
+  @apply mt-auto flex items-center justify-between text-xs text-muted-foreground;
 }
 
 /* Hidden by default, slides in when the parent `group` is hovered/focused */
@@ -264,6 +264,78 @@
 
 .navbar-avatar {
   @apply h-10 w-10 rounded-full border border-peach object-cover;
+}
+
+.navbar-avatar-initials {
+  @apply flex items-center justify-center
+         bg-card text-sm font-semibold tracking-wide text-foreground
+         select-none;
+}
+
+.balance-pill {
+  @apply inline-flex items-center gap-2
+         h-10 rounded-full
+         pl-3.5 pr-1.5
+         bg-card border border-white/10
+         text-sm
+         transition-all duration-200
+         hover:border-mint/40 hover:shadow-[0_0_20px_rgba(143,227,182,0.2)]
+         focus-visible:outline-offset-2 focus-visible:outline-mint;
+}
+
+.balance-pill-label {
+  @apply hidden sm:inline text-xs uppercase tracking-wide text-muted-foreground;
+}
+
+.balance-pill-amount {
+  @apply font-semibold tabular-nums text-foreground;
+}
+
+.balance-pill-add {
+  @apply flex items-center justify-center
+         size-7 rounded-full
+         bg-mint text-mint-text
+         shadow-[0_0_16px_rgba(143,227,182,0.35)];
+}
+
+.balance-summary {
+  @apply flex flex-col gap-2
+         rounded-xl border border-white/10 bg-muted/40
+         px-4 py-3;
+}
+
+.balance-summary-row {
+  @apply flex items-center justify-between gap-4 text-sm;
+}
+
+.balance-summary-label {
+  @apply text-muted-foreground;
+}
+
+.balance-summary-value {
+  @apply text-base font-semibold tabular-nums text-mint;
+}
+
+.balance-summary-locked {
+  @apply font-medium tabular-nums text-peach;
+}
+
+.amount-presets {
+  @apply grid grid-cols-3 gap-2 sm:grid-cols-5;
+}
+
+.amount-preset {
+  @apply rounded-full border border-white/10 bg-card
+         px-2.5 py-2
+         text-xs font-semibold tabular-nums
+         transition-all duration-200
+         hover:border-white/25 hover:bg-muted
+         focus-visible:outline-offset-2 focus-visible:outline-mint;
+}
+
+.amount-preset-active {
+  @apply border-mint bg-mint/10 text-mint
+         shadow-[0_0_18px_rgba(143,227,182,0.25)];
 }
 
 @layer base {

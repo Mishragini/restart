@@ -1,27 +1,10 @@
-import { authClient } from "@/lib/auth-client";
 import background from "../../assets/background.png";
 import { AnimatedSVG } from "./animatedSVG";
 import { HeroSection } from "./HeroSection";
 import { Sentiment } from "./sentiment";
-import { Link, Navigate } from "react-router";
-import { LoadingDots } from "../loaders";
+import { Link } from "react-router";
 
 const LandingPage = () => {
-  const {
-    data: session,
-    isPending, //loading state
-  } = authClient.useSession();
-
-  if (isPending) {
-    return (
-      <div className="screen-center">
-        <LoadingDots />
-      </div>
-    );
-  }
-  if (session?.user) {
-    return <Navigate to="/dashboard" replace />;
-  }
   return (
     <div className="relative">
       <img

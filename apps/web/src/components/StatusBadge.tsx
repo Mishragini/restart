@@ -44,6 +44,7 @@ export const StatusBadge = ({
     onSuccess: (updated) => {
       queryClient.setQueryData(["market", marketId], updated);
       queryClient.invalidateQueries({ queryKey: ["markets"] });
+      queryClient.invalidateQueries({ queryKey: ["inr-balance"] });
       const outcomeNote =
         updated.status === MarketStatus.RESOLVED && updated.outcome
           ? ` (${updated.outcome})`

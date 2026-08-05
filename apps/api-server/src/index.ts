@@ -11,7 +11,6 @@ import { schedule } from 'node-cron'
 import { closeExpiredMarkets } from "./jobs/closeExpiredMarkets.js";
 
 const app = express()
-console.log("FRONTEND_BASE_URL", FRONTEND_BASE_URL)
 
 app.use(cors({
     origin: FRONTEND_BASE_URL,

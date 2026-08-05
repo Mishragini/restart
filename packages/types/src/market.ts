@@ -28,8 +28,8 @@ export enum MarketStatus {
 }
 
 export enum Side {
-    Yes = "Yes",
-    No = "No",
+    YES = "YES",
+    NO = "NO"
 }
 
 export const MARKET_STATUSES = [
@@ -39,19 +39,13 @@ export const MARKET_STATUSES = [
     MarketStatus.CANCELLED,
 ] as const
 
-/** Final statuses — no further admin status changes. */
-export const TERMINAL_MARKET_STATUSES: readonly MarketStatus[] = [
-    MarketStatus.RESOLVED,
-    MarketStatus.CANCELLED,
-]
-
 export const isTerminalMarketStatus = (status: MarketStatus) =>
-    TERMINAL_MARKET_STATUSES.includes(status)
+    status === MarketStatus.RESOLVED || status === MarketStatus.CANCELLED
 
 export const UpdateMarketStatusSchema = z
     .object({
-        status: z.enum(["ACTIVE", "CLOSED", "RESOLVED", "CANCELLED"]),
-        outcome: z.enum(["Yes", "No"]).optional().nullable(),
+        status: z.enum(MarketStatus),
+        outcome: z.enum(Side).optional().nullable(),
     })
     .superRefine((data, ctx) => {
         if (data.status === MarketStatus.RESOLVED && data.outcome == null) {

@@ -1,7 +1,6 @@
 import { Router } from "express";
 import { AuthenticatedRequest, authMiddleware, validate } from "../lib/middleware";
 import { onRampInrSchema, type OnRampInr, type InrBalance } from "@repo/types/balance"
-import { User } from "@repo/types/user";
 import { prisma } from "@repo/db";
 export const inrBalanceRouter: Router = Router()
 
@@ -15,7 +14,7 @@ const balanceInRupees = (balance: { available: number; locked: number }): InrBal
 
 inrBalanceRouter.get("/", authMiddleware, async (req: AuthenticatedRequest, res) => {
     try {
-        const { id: userId } = req.user as User
+        const { id: userId } = req.user!
         const balance = await prisma.inrBalance.findUnique({
             where: { userId },
             select: {
@@ -38,7 +37,7 @@ inrBalanceRouter.get("/", authMiddleware, async (req: AuthenticatedRequest, res)
 inrBalanceRouter.post("/webhook", authMiddleware, validate(onRampInrSchema), async (req: AuthenticatedRequest, res) => {
     try {
         const { amount } = req.validatedData as OnRampInr
-        const { id: userId } = req.user as User
+        const { id: userId } = req.user!
         const balance = await prisma.inrBalance.update({
             where: {
                 userId

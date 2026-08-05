@@ -1,12 +1,9 @@
 import { Router } from "express";
 import { AuthenticatedRequest, authMiddleware, requireRole, validate } from "../lib/middleware";
-import { Role, type User } from "@repo/types/user";
-import { prisma } from "@repo/db";
+import { prisma, MarketStatus, Role, Side } from "@repo/db";
 import {
     CreateMarketSchema,
     FetchMarketSchema,
-    isTerminalMarketStatus,
-    MarketStatus,
     MintInput,
     MintSchema,
     UpdateMarketStatusSchema,
@@ -15,13 +12,17 @@ import {
     type UpdateMarketStatusInput,
 } from "@repo/types/market";
 import { closeExpiredMarkets } from "../jobs/closeExpiredMarkets";
+import { updateMarketStatus } from "../lib/settle";
+
+const isTerminalMarketStatus = (status: MarketStatus) =>
+    status === MarketStatus.RESOLVED || status === MarketStatus.CANCELLED
 
 export const marketRouter: Router = Router()
 
 marketRouter.post("/create", authMiddleware, requireRole([Role.ADMIN]), validate(CreateMarketSchema), async (req: AuthenticatedRequest, res) => {
     try {
         const { title, description, sourceOfTruth, categoryIds, endsAt } = req.validatedData as CreateMarketInput
-        const { id: userId } = req.user as User
+        const { id: userId } = req.user!
 
         const db_response = await prisma.market.create({
             data: {
@@ -114,26 +115,14 @@ marketRouter.patch(
                 return
             }
 
-            if (isTerminalMarketStatus(market.status as MarketStatus)) {
+            if (isTerminalMarketStatus(market.status)) {
                 res.status(400).json({
                     error: `Cannot change status of a ${market.status.toLowerCase()} market`,
                 })
                 return
             }
 
-            const updated = await prisma.market.update({
-                where: { id: marketId },
-                data: {
-                    status: nextStatus,
-                    // Clear outcome unless resolving — keeps status/outcome consistent
-                    outcome: nextStatus === MarketStatus.RESOLVED ? outcome! : null,
-                },
-                include: {
-                    categories: {
-                        select: { id: true, name: true },
-                    },
-                },
-            })
+            const updated = await updateMarketStatus(marketId, nextStatus, outcome)
 
             res.status(200).json({ message: "Market status updated", data: updated })
         } catch (error) {
@@ -149,7 +138,7 @@ const MINT_COST_PER_PAIR_PAISE = 1000
 marketRouter.post("/mint", authMiddleware, requireRole([Role.ADMIN]), validate(MintSchema), async (req: AuthenticatedRequest, res) => {
     try {
         const { amount, marketId } = req.validatedData as MintInput
-        const { id: userId } = req.user as User
+        const { id: userId } = req.user!
         const cost = amount * MINT_COST_PER_PAIR_PAISE
 
         const [market, inrBalance] = await Promise.all([
@@ -173,7 +162,7 @@ marketRouter.post("/mint", authMiddleware, requireRole([Role.ADMIN]), validate(M
 
         const result = await prisma.$transaction(async (tx) => {
             // Upsert uses @@unique([userId, marketId, side]) → compound where key userId_marketId_side
-            const upsertStock = (side: "Yes" | "No") =>
+            const upsertStock = (side: Side) =>
                 tx.stockBalance.upsert({
                     where: {
                         userId_marketId_side: { userId, marketId, side }
@@ -191,8 +180,8 @@ marketRouter.post("/mint", authMiddleware, requireRole([Role.ADMIN]), validate(M
 
             // All three succeed or the whole transaction rolls back
             const [yesBalance, noBalance, updatedInr] = await Promise.all([
-                upsertStock("Yes"),
-                upsertStock("No"),
+                upsertStock(Side.YES),
+                upsertStock(Side.NO),
                 tx.inrBalance.update({
                     where: { userId },
                     data: { available: { decrement: cost } }

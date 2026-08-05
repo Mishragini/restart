@@ -1,9 +1,11 @@
 import { NextFunction, Request, Response } from "express";
 import { auth } from "./auth";
 import { fromNodeHeaders } from "better-auth/node";
-import { Role, type User } from "@repo/types/user"
+import { Role, User } from "@repo/db"
 import z, { ZodType } from "zod"
 import { Session } from "better-auth";
+
+
 
 export interface AuthenticatedRequest extends Request {
     user?: User,
@@ -19,7 +21,10 @@ export const authMiddleware = async (req: AuthenticatedRequest, res: Response, n
         res.status(401).json({ error: "Unauthorized" })
         return;
     }
-    req.user = session.user;
+    req.user = {
+        ...session.user,
+        image: session.user.image ?? null,
+    };
     req.session = session.session;
     next()
 }

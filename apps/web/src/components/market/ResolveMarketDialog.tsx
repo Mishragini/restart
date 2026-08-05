@@ -31,14 +31,14 @@ export const ResolveMarketDialog = ({
         <Button
           className="mint-btn h-11 flex-1"
           disabled={isPending}
-          onClick={() => onResolve(Side.Yes)}
+          onClick={() => onResolve(Side.YES)}
         >
           Yes
         </Button>
         <Button
           className="peach-btn h-11 flex-1 bg-card hover:bg-card/80"
           disabled={isPending}
-          onClick={() => onResolve(Side.No)}
+          onClick={() => onResolve(Side.NO)}
         >
           No
         </Button>

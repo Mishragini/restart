@@ -1,5 +1,4 @@
-import { prisma } from "@repo/db"
-import { MarketStatus } from "@repo/types/market"
+import { prisma, MarketStatus } from "@repo/db"
 
 export const closeExpiredMarkets = async () => {
 

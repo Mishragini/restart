@@ -1,14 +1,16 @@
 import express from "express"
 import { fromNodeHeaders, toNodeHandler } from "better-auth/node";
-import { FRONTEND_BASE_URL, PORT } from "./config.js"
-import { auth } from "./lib/auth.js";
+import { FRONTEND_BASE_URL, PORT } from "./config"
+import { auth } from "./lib/auth";
 import cors from "cors"
-import { pfpRouter } from "./routes/pfp.js";
-import { marketRouter } from "./routes/market.js";
-import { categoryRouter } from "./routes/category.js";
-import { inrBalanceRouter } from "./routes/balance.js";
+import { pfpRouter } from "./routes/pfp";
+import { marketRouter } from "./routes/market";
+import { categoryRouter } from "./routes/category";
+import { inrBalanceRouter } from "./routes/balance";
 import { schedule } from 'node-cron'
-import { closeExpiredMarkets } from "./jobs/closeExpiredMarkets.js";
+import { closeExpiredMarkets } from "./jobs/closeExpiredMarkets";
+import { connectRedis, redis } from "@repo/redis";
+import { orderRouter } from "./routes/order";
 
 const app = express()
 
@@ -30,14 +32,24 @@ app.get("/api/me", async (req, res) => {
     return res.json(session)
 })
 
-app.get("/health", (req, res) => {
-    res.json({ status: "ok" })
+app.get("/health", async (req, res) => {
+    try {
+        const pong = await redis.ping();
+        res.json({ status: "ok", redis: pong });
+    } catch (error) {
+        console.error(error);
+        res.status(503).json({ status: "error", redis: "down" });
+    }
+
 })
 
 app.use("/api/v1/pfp", pfpRouter)
 app.use("/api/v1/markets", marketRouter)
 app.use("/api/v1/categories", categoryRouter)
 app.use("/api/v1/balance", inrBalanceRouter)
+app.use("/api/v1/orders", orderRouter)
+
+await connectRedis()
 
 
 app.listen(PORT, () => {

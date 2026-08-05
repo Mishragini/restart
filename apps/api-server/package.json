@@ -12,6 +12,7 @@
     "@repo/db": "workspace:*",
     "@repo/types": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@repo/redis": "workspace:*",
     "better-auth": "^1.6.23",
     "cors": "^2.8.6",
     "crypto": "^1.0.1",

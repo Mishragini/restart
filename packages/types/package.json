@@ -11,7 +11,9 @@
     "./user": "./src/user.ts",
     "./market": "./src/market.ts",
     "./category": "./src/category.ts",
-    "./balance": "./src/balance.ts"
+    "./balance": "./src/balance.ts",
+    "./order": "./src/order.ts",
+    "./engine": "./src/engine/index.ts"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

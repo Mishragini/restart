@@ -3,13 +3,7 @@ import axios from "axios";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { cn, updateMarketStatus } from "@/lib/utils";
-import {
-  MARKET_STATUSES,
-  MarketStatus,
-  Side,
-  isTerminalMarketStatus,
-  type UpdateMarketStatusInput,
-} from "@repo/types/market";
+import { MarketStatus, type Side, isTerminalMarketStatus, type UpdateMarketStatusInput, MARKET_STATUSES } from "@repo/types/market";
 import {
   Select,
   SelectContent,

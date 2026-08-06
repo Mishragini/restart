@@ -1,9 +1,9 @@
-import { NextFunction, Request, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 import { auth } from "./auth";
 import { fromNodeHeaders } from "better-auth/node";
-import { Role, User } from "@repo/db"
-import z, { ZodType } from "zod"
-import { Session } from "better-auth";
+import type { Role, User } from "@repo/db";
+import z, { type ZodType } from "zod";
+import type { Session } from "better-auth";
 
 
 

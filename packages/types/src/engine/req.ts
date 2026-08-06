@@ -1,12 +1,26 @@
-import { PlaceOrderInput } from "../order"
+import type { OnRampInr } from "../balance"
+import type { MintInput } from "../market"
+import type { PlaceOrderInput } from "../order"
 
 interface BaseReq {
-    reqId: string
+    reqId: string,
+    userId: string
 }
 interface PlaceOrderReq extends BaseReq {
+    type: "place_order",
     data: PlaceOrderInput
 }
 
-export type EngineReqData = PlaceOrderInput
+interface OnRampInrReq extends BaseReq {
+    type: "onramp_inr",
+    data: OnRampInr
+}
 
-export type EngineReq = PlaceOrderReq
+interface MintReq extends BaseReq {
+    type: "mint",
+    data: MintInput
+}
+
+export type EngineReqData = PlaceOrderInput | OnRampInr | MintInput
+
+export type EngineReq = PlaceOrderReq | OnRampInrReq | MintReq

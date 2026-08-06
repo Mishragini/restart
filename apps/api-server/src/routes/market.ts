@@ -1,18 +1,10 @@
 import { Router } from "express";
-import { AuthenticatedRequest, authMiddleware, requireRole, validate } from "../lib/middleware";
+import { type AuthenticatedRequest, authMiddleware, requireRole, validate } from "../lib/middleware";
 import { prisma, MarketStatus, Role, Side } from "@repo/db";
-import {
-    CreateMarketSchema,
-    FetchMarketSchema,
-    MintInput,
-    MintSchema,
-    UpdateMarketStatusSchema,
-    type CreateMarketInput,
-    type FetchMarketInput,
-    type UpdateMarketStatusInput,
-} from "@repo/types/market";
+import { CreateMarketSchema, FetchMarketSchema, type MintInput, MintSchema, UpdateMarketStatusSchema, type CreateMarketInput, type FetchMarketInput, type UpdateMarketStatusInput } from "@repo/types/market";
 import { closeExpiredMarkets } from "../jobs/closeExpiredMarkets";
 import { updateMarketStatus } from "../lib/settle";
+import { RedisManager } from "../lib/redisManager";
 
 const isTerminalMarketStatus = (status: MarketStatus) =>
     status === MarketStatus.RESOLVED || status === MarketStatus.CANCELLED
@@ -137,6 +129,7 @@ const MINT_COST_PER_PAIR_PAISE = 1000
 
 marketRouter.post("/mint", authMiddleware, requireRole([Role.ADMIN]), validate(MintSchema), async (req: AuthenticatedRequest, res) => {
     try {
+        const redisInstance = RedisManager.getInstance()
         const { amount, marketId } = req.validatedData as MintInput
         const { id: userId } = req.user!
         const cost = amount * MINT_COST_PER_PAIR_PAISE
@@ -160,36 +153,39 @@ marketRouter.post("/mint", authMiddleware, requireRole([Role.ADMIN]), validate(M
             return
         }
 
-        const result = await prisma.$transaction(async (tx) => {
-            // Upsert uses @@unique([userId, marketId, side]) → compound where key userId_marketId_side
-            const upsertStock = (side: Side) =>
-                tx.stockBalance.upsert({
-                    where: {
-                        userId_marketId_side: { userId, marketId, side }
-                    },
-                    create: {
-                        side,
-                        available: amount,
-                        user: { connect: { id: userId } },
-                        market: { connect: { id: marketId } }
-                    },
-                    update: {
-                        available: { increment: amount }
-                    }
-                })
+        const [result] = await Promise.all([
+            prisma.$transaction(async (tx) => {
+                // Upsert uses @@unique([userId, marketId, side]) → compound where key userId_marketId_side
+                const upsertStock = (side: Side) =>
+                    tx.stockBalance.upsert({
+                        where: {
+                            userId_marketId_side: { userId, marketId, side }
+                        },
+                        create: {
+                            side,
+                            available: amount,
+                            user: { connect: { id: userId } },
+                            market: { connect: { id: marketId } }
+                        },
+                        update: {
+                            available: { increment: amount }
+                        }
+                    })
 
-            // All three succeed or the whole transaction rolls back
-            const [yesBalance, noBalance, updatedInr] = await Promise.all([
-                upsertStock(Side.YES),
-                upsertStock(Side.NO),
-                tx.inrBalance.update({
-                    where: { userId },
-                    data: { available: { decrement: cost } }
-                })
-            ])
+                // All three succeed or the whole transaction rolls back
+                const [yesBalance, noBalance, updatedInr] = await Promise.all([
+                    upsertStock(Side.YES),
+                    upsertStock(Side.NO),
+                    tx.inrBalance.update({
+                        where: { userId },
+                        data: { available: { decrement: cost } }
+                    })
+                ])
 
-            return { yesBalance, noBalance, updatedInr }
-        })
+                return { yesBalance, noBalance, updatedInr }
+            }),
+            redisInstance.sendAndAwait(userId, { amount, marketId })
+        ])
 
         res.status(200).json({
             message: "Minted successfully",

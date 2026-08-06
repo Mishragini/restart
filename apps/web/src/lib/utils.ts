@@ -3,8 +3,8 @@ import { twMerge } from "tailwind-merge"
 import { authClient } from "./auth-client";
 import { type signup } from "@repo/types/signup"
 import { type signin } from "@repo/types/signin"
-import { MarketStatus, type CreateMarketInput, type Market, type MintInput, type UpdateMarketStatusInput } from "@repo/types/market"
-import type { InrBalance, OnRampInr } from "@repo/types/balance"
+import type { MarketStatus, CreateMarketInput, Market, MintInput, UpdateMarketStatusInput } from "@repo/types/market"
+import type { Balance, OnRampInr } from "@repo/types/balance"
 
 import axios from "axios"
 import { router } from "@/main";
@@ -128,7 +128,7 @@ export const formatInr = (amount: number) =>
         maximumFractionDigits: 2,
     })}`
 
-export const fetchInrBalance = async (): Promise<InrBalance> => {
+export const fetchInrBalance = async (): Promise<Balance> => {
     const { data } = await axios.get(
         `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/balance`,
         { withCredentials: true }
@@ -136,7 +136,7 @@ export const fetchInrBalance = async (): Promise<InrBalance> => {
     return data.data
 }
 
-export const onRampInr = async (payload: OnRampInr): Promise<InrBalance> => {
+export const onRampInr = async (payload: OnRampInr): Promise<Balance> => {
     const { data } = await axios.post(
         `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/balance/webhook`,
         payload,

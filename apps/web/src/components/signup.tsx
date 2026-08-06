@@ -19,7 +19,7 @@ import {
 } from "./ui/select";
 import { cn, googleAuth, signUp, uploadToS3 } from "@/lib/utils";
 import { Controller, useForm } from "react-hook-form";
-import { signup, signupSchema } from "@repo/types/signup";
+import { type signup, signupSchema } from "@repo/types/signup";
 import { ChangeEvent, useCallback, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";

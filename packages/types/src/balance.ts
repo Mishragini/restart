@@ -13,7 +13,7 @@ export const onRampInrSchema = z.object({
 
 export type OnRampInr = z.infer<typeof onRampInrSchema>;
 
-export type InrBalance = {
+export type Balance = {
     available: number;
     locked: number;
 };

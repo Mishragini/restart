@@ -1,14 +1,16 @@
 import { redis } from "@repo/redis"
-import { EngineReq } from "@repo/types/engine"
+import type { EngineRes, EngineSnapshot } from "@repo/types/engine"
 
 export class RedisManager {
     private static instance: RedisManager
     private queue
     private publisher
+    private snapshot
 
     private constructor() {
         this.queue = redis.duplicate()
         this.publisher = redis.duplicate()
+        this.snapshot = redis.duplicate()
     }
 
     private async connect() {
@@ -17,6 +19,9 @@ export class RedisManager {
         }
         if (!this.publisher.isOpen) {
             await this.publisher.connect()
+        }
+        if (!this.snapshot.isOpen) {
+            await this.snapshot.connect()
         }
     }
 
@@ -27,19 +32,25 @@ export class RedisManager {
         return this.instance
     }
 
-    async processReq() {
+    async readFromQueue() {
         await this.connect()
+        const request = await this.queue.brPop("api_engine_queue", 0)
+        return request
+    }
 
-        while (true) {
-            const request = await this.queue.brPop("api_engine_queue", 0)
+    async publishMessage(channel: string, message: EngineRes) {
+        await this.connect()
+        await this.publisher.publish(channel, JSON.stringify(message))
+    }
 
-            if (!request) continue
+    async getSnapshot() {
+        await this.connect()
+        return await this.snapshot.get("engine:snapshot")
+    }
 
-            const message = JSON.parse(request.element) as EngineReq
-            //process req 
-
-            this.publisher.publish(message.reqId, JSON.stringify({ ok: true }))
-        }
+    async setSnapShot(snap: EngineSnapshot) {
+        await this.connect()
+        return await this.snapshot.set("engine:snapshot", JSON.stringify(snap))
     }
 
 }

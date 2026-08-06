@@ -12,7 +12,7 @@ import { Field, FieldLabel } from "./ui/field";
 import { Input } from "./ui/input";
 import { googleAuth, signIn } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
-import { signin, signInSchema } from "@repo/types/signin";
+import { type signin, signInSchema } from "@repo/types/signin";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";

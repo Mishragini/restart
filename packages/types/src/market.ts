@@ -27,10 +27,11 @@ export enum MarketStatus {
     CANCELLED = "CANCELLED"
 }
 
-export enum Side {
-    YES = "YES",
-    NO = "NO"
-}
+export const Side = {
+    YES: "YES",
+    NO: "NO",
+} as const
+export type Side = (typeof Side)[keyof typeof Side]
 
 export const MARKET_STATUSES = [
     MarketStatus.ACTIVE,
@@ -66,7 +67,6 @@ export const UpdateMarketStatusSchema = z
 
 export type UpdateMarketStatusInput = z.infer<typeof UpdateMarketStatusSchema>
 
-// Market as returned by the API (dates are serialized to ISO strings)
 export type Market = {
     id: string
     title: string
@@ -74,11 +74,8 @@ export type Market = {
     sourceOfTruth: string
     status: MarketStatus
     outcome: Side | null
+    endsAt: Date | string
     categories: { id: string; name: string }[]
-    endsAt: string
-    createdById: string
-    createdAt: string
-    updatedAt: string
 }
 
 

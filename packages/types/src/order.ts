@@ -1,5 +1,14 @@
 import z from "zod";
 import { Side } from "./market";
+import type { Order } from "@repo/db"
+
+export const OrderType = {
+    BUY: "BUY",
+    SELL: "SELL",
+} as const
+export type OrderType = (typeof OrderType)[keyof typeof OrderType]
+
+export type { Order }
 
 export const PlaceOrderSchema = z.object({
     price: z.number()
@@ -10,6 +19,7 @@ export const PlaceOrderSchema = z.object({
         ),
     marketId: z.string().min(1, "MarketId is required"),
     quantity: z.number().min(1, "Quantity be at least be one"),
+    type: z.enum(OrderType),
     side: z.enum(Side)
 })
 

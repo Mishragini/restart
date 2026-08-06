@@ -26,7 +26,7 @@ export class RedisManager {
         return this.instance
     }
 
-    async sendAndAwait(req: EngineReqData) {
+    async sendAndAwait(userId: string, req: EngineReqData) {
 
         await this.connect()
 
@@ -43,7 +43,7 @@ export class RedisManager {
             })
         })
 
-        this.queue.lPush("api_engine_queue", JSON.stringify({ reqId, data: req }))
+        this.queue.lPush("api_engine_queue", JSON.stringify({ reqId, userId, data: req }))
         return responsePromise
     }
 }

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { requireRole, AuthenticatedRequest, validate, authMiddleware } from "../lib/middleware";
+import { requireRole, type AuthenticatedRequest, validate, authMiddleware } from "../lib/middleware";
 import { prisma, Role } from "@repo/db";
 import { category, CategorySchema } from "@repo/types/category";
 

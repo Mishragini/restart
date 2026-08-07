@@ -1,10 +1,11 @@
-import type { EngineReq, EngineState, Orderbook, UserStockBalance } from "@repo/types/engine";
-// import { handlePlaceOrder } from "./reqHandlers/order";
+import type { EngineReq, EngineRes, EngineState, Orderbook, UserStockBalance } from "@repo/types/engine";
+import { handlePlaceOrder } from "./reqHandlers/order";
 import type { RedisManager } from "./redisManager";
 import { handleOnramp } from "./reqHandlers/onramp";
 import type { Balance } from "@repo/types/balance";
 import { handleMint } from "./reqHandlers/mint";
 import { toSnapshot } from "./snapshot";
+import { toOrderbookLevels } from "./utils";
 
 export class Engine {
     private static instance: Engine
@@ -40,18 +41,55 @@ export class Engine {
                 error = "error" in mint_response
                 await redisManager.publishMessage(reqId, mint_response)
                 break
-            // case "place_order":
-            //     const order_response = handlePlaceOrder(this.orderbook, data)
-            //     redisManager.publishMessage(reqId, order_response)
-            //     //publish to ws as well
-            //     break
+            case "place_order":
+                const order_response = handlePlaceOrder({
+                    orderbook: this.orderbook,
+                    inrBalances: this.userInrBalance,
+                    stockBalances: this.userStockBalance,
+                    userId,
+                    data,
+                })
+                error = "error" in order_response
+                await redisManager.publishMessage(reqId, order_response)
+                // Only archive successful mutations — pub/sub is fire-and-forget.
+                if (!error) {
+                    await redisManager.publishMessage("archiver", order_response)
+                }
 
+                break
+            case "get_orderbook": {
+                const marketBook = this.orderbook.get(data.marketId)
+                const emptySide = { bids: [], asks: [] }
+                const orderbook_response: EngineRes = {
+                    type: "get_orderbook",
+                    message: "Orderbook fetched successfully",
+                    userId,
+                    data: {
+                        marketId: data.marketId,
+                        YES: marketBook
+                            ? {
+                                bids: toOrderbookLevels(marketBook.YES.bids, true),
+                                asks: toOrderbookLevels(marketBook.YES.asks, false),
+                            }
+                            : emptySide,
+                        NO: marketBook
+                            ? {
+                                bids: toOrderbookLevels(marketBook.NO.bids, true),
+                                asks: toOrderbookLevels(marketBook.NO.asks, false),
+                            }
+                            : emptySide,
+                    },
+                }
+                await redisManager.publishMessage(reqId, orderbook_response)
+                break
+            }
             default:
-                return { error: "Request not supported'" };
+                return { error: "Request not supported" };
         }
 
-        if (!error) {
-            await redisManager.setSnapShot(toSnapshot({
+        // Read-only ops should not rewrite the snapshot
+        if (!error && type !== "get_orderbook") {
+             await redisManager.setSnapShot(toSnapshot({
                 orderbook: this.orderbook,
                 inrBalances: this.userInrBalance,
                 stockBalances: this.userStockBalance

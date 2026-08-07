@@ -164,7 +164,7 @@ enum OrderStatus {
 model Order {
   id             String      @id @default(uuid())
   side           Side
-  price          Int
+  price          Float
   quantity       Int
   filledQuantity Int         @default(0)
   type           OrderType

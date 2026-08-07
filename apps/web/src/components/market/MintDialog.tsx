@@ -77,6 +77,7 @@ export const MintDialog = ({ marketId, triggerClassName }: MintDialogProps) => {
       } else {
         queryClient.invalidateQueries({ queryKey: ["inr-balance"] });
       }
+      queryClient.invalidateQueries({ queryKey: ["stock-balance", marketId] });
       toast.success(`Minted ${amount} Yes + ${amount} No`);
       reset({ amount: 1, marketId });
       setOpen(false);

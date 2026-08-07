@@ -184,7 +184,7 @@ marketRouter.post("/mint", authMiddleware, requireRole([Role.ADMIN]), validate(M
 
                 return { yesBalance, noBalance, updatedInr }
             }),
-            redisInstance.sendAndAwait(userId, { amount, marketId })
+            redisInstance.sendAndAwait(userId, "mint", { amount, marketId })
         ])
 
         res.status(200).json({

@@ -6,7 +6,7 @@ import cors from "cors"
 import { pfpRouter } from "./routes/pfp";
 import { marketRouter } from "./routes/market";
 import { categoryRouter } from "./routes/category";
-import { inrBalanceRouter } from "./routes/balance";
+import { balanceRouter } from "./routes/balance";
 import { schedule } from 'node-cron'
 import { closeExpiredMarkets } from "./jobs/closeExpiredMarkets";
 import { connectRedis, redis } from "@repo/redis";
@@ -46,7 +46,7 @@ app.get("/health", async (req, res) => {
 app.use("/api/v1/pfp", pfpRouter)
 app.use("/api/v1/markets", marketRouter)
 app.use("/api/v1/categories", categoryRouter)
-app.use("/api/v1/balance", inrBalanceRouter)
+app.use("/api/v1/balance", balanceRouter)
 app.use("/api/v1/orders", orderRouter)
 
 await connectRedis()

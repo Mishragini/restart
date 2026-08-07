@@ -1,5 +1,6 @@
 import { OrderStatus, OrderType, prisma } from "@repo/db"
 import type { EngineState, Orderbook, UserStockBalance } from "@repo/types/engine"
+import { getOrCreateMarketBook } from "./utils"
 
 export const loadFromDb = async (): Promise<EngineState> => {
     const [dbInrBalances, dbStockBalances, dbOrders] = await Promise.all([
@@ -48,17 +49,11 @@ export const loadFromDb = async (): Promise<EngineState> => {
     const orderbook: Orderbook = new Map()
 
     for (const order of dbOrders) {
-        let marketBook = orderbook.get(order.marketId)
-        if (!marketBook) {
-            marketBook = {
-                YES: { asks: new Map(), bids: new Map() },
-                NO: { asks: new Map(), bids: new Map() },
-                ordersById: new Map()
-            }
-            orderbook.set(order.marketId, marketBook)
-        }
+        let marketBook = getOrCreateMarketBook(orderbook, order.marketId)
 
         const engineOrder = {
+            id: order.id,
+            userId: order.userId,
             price: order.price,
             marketId: order.marketId,
             quantity: order.quantity,

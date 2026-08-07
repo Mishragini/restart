@@ -73,6 +73,28 @@ importers:
         specifier: 5.5.4
         version: 5.5.4
 
+  apps/archiver:
+    dependencies:
+      '@repo/db':
+        specifier: workspace:*
+        version: link:../../packages/database
+      '@repo/redis':
+        specifier: workspace:*
+        version: link:../../packages/redis
+      '@repo/types':
+        specifier: workspace:*
+        version: link:../../packages/types
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../packages/typescript-config
+      tsx:
+        specifier: ^4.23.0
+        version: 4.23.0
+      typescript:
+        specifier: ^7.0.2
+        version: 7.0.2
+
   apps/engine:
     dependencies:
       '@repo/db':

@@ -17,3 +17,15 @@ export type Balance = {
     available: number;
     locked: number;
 };
+
+export const getStockBalanceSchema = z.object({
+    marketId: z.string().min(1, "MarketId is required."),
+});
+
+export type GetStockBalanceInput = z.infer<typeof getStockBalanceSchema>;
+
+export type GetStockBalanceRes = {
+    marketId: string;
+    YES: Balance;
+    NO: Balance;
+};

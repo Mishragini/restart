@@ -338,6 +338,11 @@
          shadow-[0_0_18px_rgba(143,227,182,0.25)];
 }
 
+.amount-preset-active-peach {
+  @apply border-peach bg-peach/10 text-peach
+         shadow-[0_0_18px_rgba(237,168,116,0.25)];
+}
+
 .market-page {
   @apply flex w-full flex-col gap-6 p-4 md:p-6;
 }
@@ -381,12 +386,106 @@
 }
 
 .market-panel {
-  @apply flex min-h-64 items-start justify-between
+  @apply flex min-h-80 flex-col gap-4
          rounded-xl border border-white/10 bg-card p-4;
+}
+
+.market-panel-header {
+  @apply flex w-full shrink-0 items-center justify-between gap-3;
+}
+
+.market-panel-title {
+  @apply text-sm font-semibold tracking-wide text-foreground;
+}
+
+.market-panel-body {
+  @apply flex min-h-64 flex-1 flex-col items-center justify-center;
+}
+
+.market-panel-body-fill {
+  @apply items-stretch justify-start;
 }
 
 .market-panel-label {
   @apply text-sm text-muted-foreground;
+}
+
+.market-view-toggle {
+  @apply flex shrink-0 items-center gap-1.5;
+}
+
+.orderbook {
+  @apply flex w-full flex-col gap-1.5;
+}
+
+.orderbook-header {
+  @apply grid grid-cols-4 gap-2
+         border-b border-white/10 pb-2
+         text-[11px] font-semibold uppercase tracking-wide text-muted-foreground;
+}
+
+.orderbook-rows {
+  @apply flex flex-col gap-1;
+}
+
+.orderbook-row {
+  @apply grid grid-cols-4 items-center gap-2 py-0.5;
+}
+
+.orderbook-price {
+  @apply text-sm font-semibold tabular-nums;
+}
+
+.orderbook-depth {
+  @apply relative flex h-8 items-center overflow-hidden
+         rounded-md bg-muted/30 px-2.5;
+}
+
+.orderbook-depth-empty {
+  @apply justify-center text-xs text-muted-foreground;
+}
+
+.orderbook-depth-bar {
+  @apply absolute inset-y-0 left-0 rounded-md transition-[width] duration-300;
+}
+
+.orderbook-depth-bar-yes {
+  @apply bg-mint/25;
+}
+
+.orderbook-depth-bar-no {
+  @apply bg-peach/25;
+}
+
+.orderbook-depth-qty {
+  @apply relative z-10 text-sm font-semibold tabular-nums;
+}
+
+.place-order-form {
+  @apply gap-4;
+}
+
+.place-order-presets {
+  @apply mb-2 grid-cols-3 sm:grid-cols-3;
+}
+
+.order-history {
+  @apply flex w-full min-h-0 max-h-72 flex-col gap-1.5;
+}
+
+.order-history-header {
+  @apply grid shrink-0 grid-cols-5 gap-2
+         border-b border-white/10 pb-2
+         text-[11px] font-semibold uppercase tracking-wide text-muted-foreground;
+}
+
+.order-history-list {
+  @apply flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain;
+}
+
+.order-history-row {
+  @apply grid grid-cols-5 items-center gap-2 py-1.5
+         text-sm;
 }
 
 @layer base {

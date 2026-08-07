@@ -7,7 +7,7 @@ export type MarketStockBalance = {
 
 export type UserStockBalance = Map<string, Map<string, MarketStockBalance>>
 
-export type Order = PlaceOrderInput & { filledQuantity: number }
+export type Order = PlaceOrderInput & { id: string; userId: string; filledQuantity: number }
 
 export type PriceLevel = {
     price: number,

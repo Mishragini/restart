@@ -4,7 +4,9 @@ import { authClient } from "./auth-client";
 import { type signup } from "@repo/types/signup"
 import { type signin } from "@repo/types/signin"
 import type { MarketStatus, CreateMarketInput, Market, MintInput, UpdateMarketStatusInput } from "@repo/types/market"
-import type { Balance, OnRampInr } from "@repo/types/balance"
+import type { Balance, GetStockBalanceRes, OnRampInr } from "@repo/types/balance"
+import type { GetOrderbookRes, PlaceOrderRes } from "@repo/types/engine"
+import type { GetUserOrdersRes, Order, OrderStatus, PlaceOrderInput } from "@repo/types/order"
 
 import axios from "axios"
 import { router } from "@/main";
@@ -167,4 +169,79 @@ export const updateMarketStatus = async (
         { withCredentials: true },
     )
     return data.data
+}
+
+export const fetchOrderbook = async (marketId: string): Promise<GetOrderbookRes> => {
+    const { data } = await axios.get(
+        `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/orders`,
+        {
+            params: { marketId },
+            withCredentials: true,
+        },
+    )
+    return data.data
+}
+
+export const fetchStockBalance = async (marketId: string): Promise<GetStockBalanceRes> => {
+    const { data } = await axios.get(
+        `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/balance/stock`,
+        {
+            params: { marketId },
+            withCredentials: true,
+        },
+    )
+    return data.data
+}
+
+/** Settlement payout per winning share — matches mint pair cost. */
+export const SHARE_PAYOUT_INR = 10
+
+export type PlaceOrderApiRes = {
+    type: "place_order"
+    message: string
+    userId: string
+    data: PlaceOrderRes
+}
+
+export const placeOrder = async (payload: PlaceOrderInput): Promise<PlaceOrderApiRes> => {
+    const { data } = await axios.post(
+        `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/orders/place-order`,
+        payload,
+        { withCredentials: true },
+    )
+    return data
+}
+
+export const fetchUserOrders = async (
+    marketId: string,
+    status?: OrderStatus,
+): Promise<GetUserOrdersRes> => {
+    const { data } = await axios.get(
+        `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/orders/user`,
+        {
+            params: { marketId, ...(status && { status }) },
+            withCredentials: true,
+        },
+    )
+    return data.data
+}
+
+/** Merge engine order updates into a cached user-orders list, respecting status filter. */
+export const mergeUserOrders = (
+    cached: Order[] | undefined,
+    updates: Order[],
+    statusFilter?: string,
+) => {
+    const byId = new Map((cached ?? []).map((order) => [order.id, order]))
+
+    for (const order of updates) {
+        const matches =
+            !statusFilter || statusFilter === "ALL" || order.status === statusFilter
+        if (matches) byId.set(order.id, { ...byId.get(order.id), ...order })
+        else byId.delete(order.id)
+    }
+
+    return [...byId.values()].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    )
 }

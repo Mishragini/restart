@@ -4,6 +4,9 @@ import error from "../../assets/error.svg";
 import { fetchMarket } from "@/lib/utils";
 import { LoadingDots } from "../loaders";
 import { MarketHeader } from "./MarketHeader";
+import { MarketPanel } from "./MarketPanel";
+import { OrderHistoryCard } from "./OrderHistoryCard";
+import { PlaceOrderCard } from "./PlaceOrderCard";
 
 export default function MarketPage() {
   const { marketId } = useParams<{ marketId: string }>();
@@ -37,6 +40,11 @@ export default function MarketPage() {
   return (
     <div className="market-page">
       <MarketHeader market={market} />
+      <div className="market-grid">
+        <MarketPanel marketId={market.id} />
+        <PlaceOrderCard marketId={market.id} status={market.status} />
+      </div>
+      <OrderHistoryCard marketId={market.id} />
     </div>
   );
 }

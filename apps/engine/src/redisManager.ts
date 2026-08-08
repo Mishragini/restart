@@ -1,5 +1,5 @@
-import { redis } from "@repo/redis"
-import type { EngineRes, EngineSnapshot } from "@repo/types/engine"
+import { ENGINE_ARCHIVER_STREAM, redis } from "@repo/redis"
+import type { EngineRes, EngineSnapshot, MarketUpdateMessage } from "@repo/types/engine"
 
 export class RedisManager {
     private static instance: RedisManager
@@ -38,9 +38,16 @@ export class RedisManager {
         return request
     }
 
-    async publishMessage(channel: string, message: EngineRes) {
+    async publishMessage(channel: string, message: EngineRes | MarketUpdateMessage) {
         await this.connect()
         await this.publisher.publish(channel, JSON.stringify(message))
+    }
+
+    async publishToArchiver(message: EngineRes) {
+        await this.connect()
+        await this.publisher.xAdd(ENGINE_ARCHIVER_STREAM, "*", {
+            payload: JSON.stringify(message),
+        })
     }
 
     async getSnapshot() {
@@ -52,5 +59,4 @@ export class RedisManager {
         await this.connect()
         return await this.snapshot.set("engine:snapshot", JSON.stringify(snap))
     }
-
 }

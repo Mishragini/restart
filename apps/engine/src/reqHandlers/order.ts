@@ -5,11 +5,12 @@ import type {
     Order,
     Orderbook,
     Sidebook,
+    Trade,
     UserStockBalance,
 } from "@repo/types/engine";
 import type { Side } from "@repo/types/market";
 import { OrderType, type PlaceOrderInput } from "@repo/types/order";
-import { getOrCreateMarketBook } from "../utils";
+import { getInr, getOrCreateMarketBook, getStock } from "../utils";
 
 const remaining = (order: Order) => order.quantity - order.filledQuantity;
 
@@ -17,39 +18,6 @@ const getStatus = (order: Order): OrderStatus => {
     if (order.filledQuantity === 0) return OrderStatus.PENDING;
     if (remaining(order) === 0) return OrderStatus.FULFILLED;
     return OrderStatus.PARTIALLY_FULFILLED;
-};
-
-const getInr = (inrBalances: Map<string, Balance>, userId: string): Balance => {
-    let balance = inrBalances.get(userId);
-    if (!balance) {
-        balance = { available: 0, locked: 0 };
-        inrBalances.set(userId, balance);
-    }
-    return balance;
-};
-
-const getStock = (
-    stockBalances: UserStockBalance,
-    userId: string,
-    marketId: string,
-    side: Side,
-): Balance => {
-    let markets = stockBalances.get(userId);
-    if (!markets) {
-        markets = new Map();
-        stockBalances.set(userId, markets);
-    }
-
-    let market = markets.get(marketId);
-    if (!market) {
-        market = {
-            YES: { available: 0, locked: 0 },
-            NO: { available: 0, locked: 0 },
-        };
-        markets.set(marketId, market);
-    }
-
-    return market[side];
 };
 
 /** Lock funds for a resting/taker order. Returns an error response if insufficient. */
@@ -78,7 +46,7 @@ const lockFunds = (
     return null;
 };
 
-/** Move filled qty out of locked balances and credit the counterparty. */
+/** Move filled qty out of locked balances and credit the counterparty at maker price. */
 const settleFill = (
     buy: Order,
     sell: Order,
@@ -88,33 +56,75 @@ const settleFill = (
     stockBalances: UserStockBalance,
 ) => {
     const cost = price * fill;
+    // Buyer locked at their limit; refund any price improvement.
+    const lockedForFill = buy.price * fill;
 
     const buyInr = getInr(inrBalances, buy.userId);
-    buyInr.locked -= cost;
+    buyInr.locked -= lockedForFill;
+    buyInr.available += lockedForFill - cost;
     getStock(stockBalances, buy.userId, buy.marketId, buy.side).available += fill;
 
     getStock(stockBalances, sell.userId, sell.marketId, sell.side).locked -= fill;
     getInr(inrBalances, sell.userId).available += cost;
 };
 
+/** Record a fill in the in-memory tradebook (keyed by marketId). */
+const addTrade = (
+    tradebook: Map<string, Trade[]>,
+    args: {
+        marketId: string;
+        price: number;
+        quantity: number;
+        side: Side;
+        buyOrderId: string;
+        sellOrderId: string;
+    },
+): Trade => {
+    const trade: Trade = {
+        id: crypto.randomUUID(),
+        ...args,
+    };
+    const trades = tradebook.get(args.marketId) ?? [];
+    trades.push(trade);
+    tradebook.set(args.marketId, trades);
+    return trade;
+};
+
+/** @returns true if matching must stop because the next maker is the taker (no self-trade). */
 const matchAtPrice = (
     book: Sidebook,
     price: number,
     taker: Order,
     inrBalances: Map<string, Balance>,
     stockBalances: UserStockBalance,
+    tradebook: Map<string, Trade[]>,
     matched: Order[],
-) => {
+    fills: Trade[],
+): boolean => {
     const level = book.get(price);
-    if (!level) return;
+    if (!level) return false;
 
     while (remaining(taker) > 0 && level.orders.length > 0) {
         const maker = level.orders[0]!;
+        // No self-trades: stop at own resting order (keeps price-time priority).
+        if (maker.userId === taker.userId) return true;
+
         const fill = Math.min(remaining(taker), remaining(maker));
 
         const buy = taker.type === OrderType.BUY ? taker : maker;
         const sell = taker.type === OrderType.SELL ? taker : maker;
         settleFill(buy, sell, fill, price, inrBalances, stockBalances);
+
+        fills.push(
+            addTrade(tradebook, {
+                marketId: taker.marketId,
+                price,
+                quantity: fill,
+                side: taker.side,
+                buyOrderId: buy.id,
+                sellOrderId: sell.id,
+            }),
+        );
 
         maker.filledQuantity += fill;
         taker.filledQuantity += fill;
@@ -128,6 +138,42 @@ const matchAtPrice = (
 
     if (level.orders.length === 0) {
         book.delete(price);
+    }
+    return false;
+};
+
+/**
+ * Cross the opposing book:
+ * - BUY  matches asks with price <= taker.price (lowest ask first)
+ * - SELL matches bids with price >= taker.price (highest bid first)
+ */
+const matchOrder = (
+    book: Sidebook,
+    taker: Order,
+    inrBalances: Map<string, Balance>,
+    stockBalances: UserStockBalance,
+    tradebook: Map<string, Trade[]>,
+    matched: Order[],
+    fills: Trade[],
+) => {
+    const isBuy = taker.type === OrderType.BUY;
+    const prices = [...book.keys()]
+        .filter((p) => (isBuy ? p <= taker.price : p >= taker.price))
+        .sort((a, b) => (isBuy ? a - b : b - a));
+
+    for (const price of prices) {
+        if (remaining(taker) <= 0) break;
+        const blockedBySelf = matchAtPrice(
+            book,
+            price,
+            taker,
+            inrBalances,
+            stockBalances,
+            tradebook,
+            matched,
+            fills,
+        );
+        if (blockedBySelf) break;
     }
 };
 
@@ -149,6 +195,7 @@ type PlaceOrderArgs = {
     orderbook: Orderbook;
     inrBalances: Map<string, Balance>;
     stockBalances: UserStockBalance;
+    tradebook: Map<string, Trade[]>;
     userId: string;
     data: PlaceOrderInput;
 };
@@ -157,6 +204,7 @@ export const handlePlaceOrder = ({
     orderbook,
     inrBalances,
     stockBalances,
+    tradebook,
     userId,
     data,
 }: PlaceOrderArgs): EngineRes => {
@@ -179,10 +227,11 @@ export const handlePlaceOrder = ({
         if (lockError) return lockError;
 
         const matched: Order[] = [];
+        const fills: Trade[] = [];
         const { bids, asks } = marketBook[side];
         const isBuy = type === OrderType.BUY;
 
-        matchAtPrice(isBuy ? asks : bids, price, order, inrBalances, stockBalances, matched);
+        matchOrder(isBuy ? asks : bids, order, inrBalances, stockBalances, tradebook, matched, fills);
         restOrder(isBuy ? bids : asks, order);
         marketBook.ordersById.set(order.id, order);
 
@@ -212,6 +261,7 @@ export const handlePlaceOrder = ({
                 orders: affected.map((o) => ({ ...o, status: getStatus(o) })),
                 inrBalances: [...inrByUser.values()],
                 stockBalances: [...stockByKey.values()],
+                trades: fills,
             },
         };
     } catch (error) {

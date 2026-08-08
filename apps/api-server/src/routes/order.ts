@@ -4,12 +4,15 @@ import { type AuthenticatedRequest, authMiddleware, validate } from "../lib/midd
 import {
     GetUserOrdersSchema,
     getOrderbookSchema,
+    getTradesSchema,
     PlaceOrderSchema,
     type GetUserOrdersInput,
     type getOrderbookInput,
+    type getTradesInput,
     type PlaceOrderInput,
 } from "@repo/types/order";
 import { RedisManager } from "../lib/redisManager";
+import { orderbookInRupees, placeOrderResInRupees, toPaise, toRupees, tradesInRupees } from "../lib/utils";
 
 export const orderRouter: Router = Router()
 
@@ -21,7 +24,34 @@ orderRouter.get("/", authMiddleware, validate(getOrderbookSchema, "query"), asyn
         if ("error" in engine_response) {
             throw new Error(engine_response.error)
         }
-        res.json({ message: engine_response.message, data: engine_response.data })
+        if (engine_response.type !== "get_orderbook") {
+            throw new Error("Unexpected engine response")
+        }
+        res.json({
+            message: engine_response.message,
+            data: orderbookInRupees(engine_response.data),
+        })
+    } catch (error) {
+        console.error(error)
+        res.status(500).json({ error: "Something went wrong :(. Please try again later" })
+    }
+})
+
+orderRouter.get("/trades", authMiddleware, validate(getTradesSchema, "query"), async (req: AuthenticatedRequest, res) => {
+    try {
+        const { marketId } = req.validatedData as getTradesInput
+        const { id: userId } = req.user!
+        const engine_response = await RedisManager.getInstance().sendAndAwait(userId, "get_trades", { marketId })
+        if ("error" in engine_response) {
+            throw new Error(engine_response.error)
+        }
+        if (engine_response.type !== "get_trades") {
+            throw new Error("Unexpected engine response")
+        }
+        res.json({
+            message: engine_response.message,
+            data: tradesInRupees(engine_response.data),
+        })
     } catch (error) {
         console.error(error)
         res.status(500).json({ error: "Something went wrong :(. Please try again later" })
@@ -42,7 +72,9 @@ orderRouter.get("/user", authMiddleware, validate(GetUserOrdersSchema, "query"),
             orderBy: { createdAt: "desc" },
         })
 
-        res.status(200).json({ data: orders })
+        res.status(200).json({
+            data: orders.map((o) => ({ ...o, price: toRupees(o.price) })),
+        })
     } catch (error) {
         console.error(error)
         res.status(500).json({ error: "Something went wrong :(. Please try again later" })
@@ -51,14 +83,21 @@ orderRouter.get("/user", authMiddleware, validate(GetUserOrdersSchema, "query"),
 
 orderRouter.post("/place-order", authMiddleware, validate(PlaceOrderSchema), async (req: AuthenticatedRequest, res) => {
     try {
-        const data = req.validatedData as PlaceOrderInput
+        const input = req.validatedData as PlaceOrderInput
         const { id: userId } = req.user!
-        // add req to queue and await the response from the engine via pub sub 
+        const data = { ...input, price: toPaise(input.price) }
         const response = await RedisManager.getInstance().sendAndAwait(userId, "place_order", data)
         if ('error' in response) {
-            throw new Error(response.error)
+            res.status(400).json({ error: response.error })
+            return
         }
-        res.json(response)
+        if (response.type !== "place_order") {
+            throw new Error("Unexpected engine response")
+        }
+        res.json({
+            ...response,
+            data: placeOrderResInRupees(response.data),
+        })
     } catch (error) {
         console.error(error)
         res.status(500).json({ error: "Something went wrong :(. Please try again later" })

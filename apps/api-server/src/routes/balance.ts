@@ -10,12 +10,10 @@ import {
 } from "@repo/types/balance"
 import { prisma } from "@repo/db";
 import { RedisManager } from "../lib/redisManager";
+import { toPaise, toRupees } from "../lib/utils";
 
 export const balanceRouter: Router = Router()
 
-/** Store amounts as paise (integer); API speaks in rupees. */
-const toPaise = (rupees: number) => Math.round(rupees * 100)
-const toRupees = (paise: number) => paise / 100
 const balanceInRupees = (balance: { available: number; locked: number }): Balance => ({
     available: toRupees(balance.available),
     locked: toRupees(balance.locked),
@@ -80,13 +78,14 @@ balanceRouter.post("/webhook", authMiddleware, validate(onRampInrSchema), async 
         const redisInstance = RedisManager.getInstance()
         const { amount } = req.validatedData as OnRampInr
         const { id: userId } = req.user!
+        const amountPaise = toPaise(amount)
         const [balance] = await Promise.all([prisma.inrBalance.update({
             where: {
                 userId
             },
             data: {
                 available: {
-                    increment: toPaise(amount)
+                    increment: amountPaise
                 }
             },
             select: {
@@ -94,7 +93,7 @@ balanceRouter.post("/webhook", authMiddleware, validate(onRampInrSchema), async 
                 locked: true,
             },
         }),
-        redisInstance.sendAndAwait(userId, "onramp_inr", { amount })
+        redisInstance.sendAndAwait(userId, "onramp_inr", { amount: amountPaise })
         ])
         res.status(200).json({ message: "Funds added successfully", data: balanceInRupees(balance) })
     } catch (error) {

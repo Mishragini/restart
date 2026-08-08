@@ -5,6 +5,7 @@ import { CreateMarketSchema, FetchMarketSchema, type MintInput, MintSchema, Upda
 import { closeExpiredMarkets } from "../jobs/closeExpiredMarkets";
 import { updateMarketStatus } from "../lib/settle";
 import { RedisManager } from "../lib/redisManager";
+import { toRupees } from "../lib/utils";
 
 const isTerminalMarketStatus = (status: MarketStatus) =>
     status === MarketStatus.RESOLVED || status === MarketStatus.CANCELLED
@@ -193,8 +194,8 @@ marketRouter.post("/mint", authMiddleware, requireRole([Role.ADMIN]), validate(M
                 yes: result.yesBalance,
                 no: result.noBalance,
                 inrBalance: {
-                    available: result.updatedInr.available / 100,
-                    locked: result.updatedInr.locked / 100
+                    available: toRupees(result.updatedInr.available),
+                    locked: toRupees(result.updatedInr.locked)
                 }
             }
         })

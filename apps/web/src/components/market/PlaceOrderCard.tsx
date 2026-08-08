@@ -3,6 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { toast } from "sonner";
+import type { GetStockBalanceRes } from "@repo/types/balance";
 import { MarketStatus, Side } from "@repo/types/market";
 import {
   OrderType,
@@ -153,9 +154,45 @@ export const PlaceOrderCard = ({ marketId, status }: PlaceOrderCardProps) => {
         );
       }
 
+      // Engine balances are authoritative; DB archive lags — don't refetch yet
+      const myInr = res.data.inrBalances.find((b) => b.userId === res.userId);
+      if (myInr) {
+        queryClient.setQueryData(["inr-balance"], {
+          available: myInr.available,
+          locked: myInr.locked,
+        });
+      }
+
+      const myStock = res.data.stockBalances.filter(
+        (b) => b.userId === res.userId && b.marketId === marketId,
+      );
+      if (myStock.length > 0) {
+        queryClient.setQueryData<GetStockBalanceRes>(
+          ["stock-balance", marketId],
+          (prev) => {
+            const next: GetStockBalanceRes = prev ?? {
+              marketId,
+              YES: { available: 0, locked: 0 },
+              NO: { available: 0, locked: 0 },
+            };
+            const updated = {
+              ...next,
+              YES: { ...next.YES },
+              NO: { ...next.NO },
+            };
+            for (const s of myStock) {
+              updated[s.side] = {
+                available: s.available,
+                locked: s.locked,
+              };
+            }
+            return updated;
+          },
+        );
+      }
+
       queryClient.invalidateQueries({ queryKey: ["orderbook", marketId] });
-      queryClient.invalidateQueries({ queryKey: ["inr-balance"] });
-      queryClient.invalidateQueries({ queryKey: ["stock-balance", marketId] });
+      queryClient.invalidateQueries({ queryKey: ["trades", marketId] });
       queryClient.invalidateQueries({
         queryKey: ["user-orders", marketId],
         refetchType: "none",

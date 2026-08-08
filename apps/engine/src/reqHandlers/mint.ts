@@ -1,25 +1,28 @@
+import type { Balance } from "@repo/types/balance";
 import type { EngineRes, UserStockBalance } from "@repo/types/engine";
 import type { MintInput } from "@repo/types/market";
+import { getInr, getStock, MINT_COST_PER_PAIR_PAISE } from "../utils";
 
-export const handleMint = (stockBalance: UserStockBalance, userId: string, data: MintInput): EngineRes => {
+export const handleMint = (
+    stockBalance: UserStockBalance,
+    inrBalances: Map<string, Balance>,
+    userId: string,
+    data: MintInput,
+): EngineRes => {
     try {
-        const { amount, marketId } = data
-        let userMarkets = stockBalance.get(userId)
-        if (!userMarkets) {
-            userMarkets = new Map()
-            stockBalance.set(userId, userMarkets)
-        }
+        const { amount, marketId } = data;
+        const cost = amount * MINT_COST_PER_PAIR_PAISE;
+        const inr = getInr(inrBalances, userId);
 
-        let existing = userMarkets.get(marketId)
-        if (!existing) {
-            existing = {
-                YES: { available: 0, locked: 0 },
-                NO: { available: 0, locked: 0 }
-            }
-            userMarkets.set(marketId, existing)
+        if (inr.available < cost) {
+            return { error: "Insufficient INR balance" };
         }
-        existing.YES.available += amount
-        existing.NO.available += amount
+        inr.available -= cost;
+
+        const yes = getStock(stockBalance, userId, marketId, "YES");
+        const no = getStock(stockBalance, userId, marketId, "NO");
+        yes.available += amount;
+        no.available += amount;
 
         return {
             message: "Mint engine req successful!",
@@ -31,21 +34,28 @@ export const handleMint = (stockBalance: UserStockBalance, userId: string, data:
                         userId,
                         marketId,
                         side: "YES",
-                        available: existing.YES.available,
-                        locked: existing.YES.locked,
+                        available: yes.available,
+                        locked: yes.locked,
                     },
                     {
                         userId,
                         marketId,
                         side: "NO",
-                        available: existing.NO.available,
-                        locked: existing.NO.locked,
+                        available: no.available,
+                        locked: no.locked,
+                    },
+                ],
+                inrBalances: [
+                    {
+                        userId,
+                        available: inr.available,
+                        locked: inr.locked,
                     },
                 ],
             },
-        }
+        };
     } catch (error) {
-        console.error(error)
-        return { error: "Mint engine req failed :(" }
+        console.error(error);
+        return { error: "Mint engine req failed :(" };
     }
-}
+};

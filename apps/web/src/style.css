@@ -382,12 +382,17 @@
 }
 
 .market-grid {
-  @apply grid gap-4 lg:grid-cols-[1fr_320px];
+  @apply grid items-stretch gap-4 lg:grid-cols-[1fr_320px];
 }
 
 .market-panel {
   @apply flex min-h-80 flex-col gap-4
          rounded-xl border border-white/10 bg-card p-4;
+}
+
+/** Match place-order height in the grid row; body scrolls instead of growing. */
+.market-panel-fixed {
+  @apply min-h-80 max-h-128 overflow-hidden lg:h-full lg:max-h-none lg:min-h-0;
 }
 
 .market-panel-header {
@@ -400,6 +405,10 @@
 
 .market-panel-body {
   @apply flex min-h-64 flex-1 flex-col items-center justify-center;
+}
+
+.market-panel-fixed .market-panel-body {
+  @apply min-h-0 overflow-hidden;
 }
 
 .market-panel-body-fill {
@@ -459,6 +468,24 @@
 
 .orderbook-depth-qty {
   @apply relative z-10 text-sm font-semibold tabular-nums;
+}
+
+.trades {
+  @apply flex h-full min-h-0 w-full flex-col gap-1.5;
+}
+
+.trades-header {
+  @apply grid shrink-0 grid-cols-3 gap-2
+         border-b border-white/10 pb-2
+         text-[11px] font-semibold uppercase tracking-wide text-muted-foreground;
+}
+
+.trades-list {
+  @apply min-h-0 flex-1 overflow-y-auto overscroll-contain;
+}
+
+.trades-row {
+  @apply grid grid-cols-3 items-center gap-2 py-1.5 text-sm font-semibold;
 }
 
 .place-order-form {

@@ -5,7 +5,7 @@ import { type signup } from "@repo/types/signup"
 import { type signin } from "@repo/types/signin"
 import type { MarketStatus, CreateMarketInput, Market, MintInput, UpdateMarketStatusInput } from "@repo/types/market"
 import type { Balance, GetStockBalanceRes, OnRampInr } from "@repo/types/balance"
-import type { GetOrderbookRes, PlaceOrderRes } from "@repo/types/engine"
+import type { GetOrderbookRes, GetTradesRes, PlaceOrderRes } from "@repo/types/engine"
 import type { GetUserOrdersRes, Order, OrderStatus, PlaceOrderInput } from "@repo/types/order"
 
 import axios from "axios"
@@ -174,6 +174,17 @@ export const updateMarketStatus = async (
 export const fetchOrderbook = async (marketId: string): Promise<GetOrderbookRes> => {
     const { data } = await axios.get(
         `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/orders`,
+        {
+            params: { marketId },
+            withCredentials: true,
+        },
+    )
+    return data.data
+}
+
+export const fetchTrades = async (marketId: string): Promise<GetTradesRes> => {
+    const { data } = await axios.get(
+        `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/orders/trades`,
         {
             params: { marketId },
             withCredentials: true,

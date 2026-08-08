@@ -1,9 +1,9 @@
 import { OrderStatus, OrderType, prisma } from "@repo/db"
-import type { EngineState, Orderbook, UserStockBalance } from "@repo/types/engine"
+import type { EngineState, Orderbook, Trade, UserStockBalance } from "@repo/types/engine"
 import { getOrCreateMarketBook } from "./utils"
 
 export const loadFromDb = async (): Promise<EngineState> => {
-    const [dbInrBalances, dbStockBalances, dbOrders] = await Promise.all([
+    const [dbInrBalances, dbStockBalances, dbOrders, dbTrades] = await Promise.all([
         prisma.inrBalance.findMany(),
         prisma.stockBalance.findMany(),
         prisma.order.findMany({
@@ -12,7 +12,11 @@ export const loadFromDb = async (): Promise<EngineState> => {
                     in: [OrderStatus.PENDING, OrderStatus.PARTIALLY_FULFILLED]
                 }
             }
-        })
+        }),
+        prisma.trade.findMany({
+            include: { buyOrder: { select: { side: true } } },
+            orderBy: { createdAt: "asc" },
+        }),
     ])
     const inrBalances = new Map(
         dbInrBalances.map((balance) =>
@@ -74,5 +78,21 @@ export const loadFromDb = async (): Promise<EngineState> => {
         marketBook.ordersById.set(order.id, engineOrder)
     }
 
-    return { inrBalances, stockBalances, orderbook }
+    const tradebook = new Map<string, Trade[]>()
+    for (const trade of dbTrades) {
+        const entry: Trade = {
+            id: trade.id,
+            marketId: trade.marketId,
+            price: trade.price,
+            quantity: trade.quantity,
+            side: trade.buyOrder.side,
+            buyOrderId: trade.buyOrderId,
+            sellOrderId: trade.sellOrderId,
+        }
+        const trades = tradebook.get(trade.marketId) ?? []
+        trades.push(entry)
+        tradebook.set(trade.marketId, trades)
+    }
+
+    return { inrBalances, stockBalances, orderbook, tradebook }
 }

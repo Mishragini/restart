@@ -3,7 +3,7 @@ import type { EngineSnapshot, EngineState, PriceLevel, Sidebook } from "@repo/ty
 const toSidebook = (snap: Record<number, PriceLevel>): Sidebook =>
     new Map(Object.entries(snap).map(([price, level]) => [Number(price), level]))
 
-export const toSnapshot = ({ orderbook, inrBalances, stockBalances }: EngineState): EngineSnapshot => {
+export const toSnapshot = ({ orderbook, inrBalances, stockBalances, tradebook }: EngineState): EngineSnapshot => {
     return {
         inrBalances: Object.fromEntries(inrBalances),
         stockBalances: Object.fromEntries([...stockBalances].map(([userId, markets]) => [
@@ -23,7 +23,8 @@ export const toSnapshot = ({ orderbook, inrBalances, stockBalances }: EngineStat
                 },
                 ordersById: Object.fromEntries(marketBook.ordersById)
             }
-        ]))
+        ])),
+        tradebook: Object.fromEntries(tradebook),
     }
 }
 
@@ -52,5 +53,8 @@ export const fromSnapshot = (snap: EngineSnapshot): EngineState => {
                 }]
             })
     )
-    return { inrBalances, stockBalances, orderbook }
+    const tradebook = new Map(
+        Object.entries(snap.tradebook ?? {}).map(([marketId, trades]) => [marketId, trades])
+    )
+    return { inrBalances, stockBalances, orderbook, tradebook }
 }

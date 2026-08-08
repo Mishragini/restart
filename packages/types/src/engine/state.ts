@@ -1,3 +1,4 @@
+import { Side } from "@repo/db"
 import type { Balance } from "../balance"
 import type { PlaceOrderInput } from "../order"
 
@@ -23,11 +24,21 @@ export type MarketBook = {
 }
 
 export type Orderbook = Map<string, MarketBook>
+export type Trade = {
+    id: string,
+    marketId: string
+    price: number,
+    quantity: number,
+    side: Side,
+    buyOrderId: string,
+    sellOrderId: string
+}
 
 export type EngineState = {
     orderbook: Orderbook
     inrBalances: Map<string, Balance>
     stockBalances: UserStockBalance
+    tradebook: Map<string, Trade[]>
 }
 
 type SnapSidebook = Record<number, PriceLevel>
@@ -42,4 +53,5 @@ export type EngineSnapshot = {
     inrBalances: Record<string, Balance>,
     stockBalances: Record<string, Record<string, MarketStockBalance>>,
     orderbook: Record<string, SnapMarketBook>
+    tradebook: Record<string, Trade[]>
 }

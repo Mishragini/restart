@@ -12,6 +12,8 @@ export type {
     OrderbookLevel,
     SidebookView,
     GetOrderbookRes,
+    GetTradesRes,
+    MarketUpdateMessage,
 } from "./ops"
 export type {
     Order,
@@ -22,4 +24,5 @@ export type {
     UserStockBalance,
     EngineState,
     EngineSnapshot,
+    Trade
 } from "./state"

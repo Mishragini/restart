@@ -40,6 +40,9 @@ export const getOrderbookSchema = z.object({
 
 export type getOrderbookInput = z.infer<typeof getOrderbookSchema>
 
+export const getTradesSchema = getOrderbookSchema
+export type getTradesInput = getOrderbookInput
+
 export const GetUserOrdersSchema = z.object({
     marketId: z.string().min(1, "MarketId is required."),
     status: z.enum(OrderStatus).optional(),

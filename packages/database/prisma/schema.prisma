@@ -107,6 +107,7 @@ model Market {
   endsAt        DateTime       @db.Timestamptz(3)
   stockBalances StockBalance[]
   orders        Order[]
+  trades        Trade[]
   createdById   String
   createdBy     User           @relation(references: [id], fields: [createdById])
   createdAt     DateTime       @default(now()) @db.Timestamptz(3)
@@ -164,7 +165,7 @@ enum OrderStatus {
 model Order {
   id             String      @id @default(uuid())
   side           Side
-  price          Float
+  price          Int
   quantity       Int
   filledQuantity Int         @default(0)
   type           OrderType
@@ -173,10 +174,29 @@ model Order {
   market         Market      @relation(fields: [marketId], references: [id], onDelete: Cascade)
   userId         String
   user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  buyTrades      Trade[]     @relation("BuyOrderTrades")
+  sellTrades     Trade[]     @relation("SellOrderTrades")
   createdAt      DateTime    @default(now()) @db.Timestamptz(3)
   updatedAt      DateTime    @updatedAt @db.Timestamptz(3)
 
   @@index([marketId])
   @@index([userId])
   @@map("order")
+}
+
+model Trade {
+  id          String   @id @default(uuid())
+  price       Int
+  quantity    Int
+  marketId    String
+  market      Market   @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  buyOrderId  String
+  buyOrder    Order    @relation("BuyOrderTrades", fields: [buyOrderId], references: [id], onDelete: Cascade)
+  sellOrderId String
+  sellOrder   Order    @relation("SellOrderTrades", fields: [sellOrderId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(3)
+
+  @@index([marketId])
+  @@map("trade")
 }

@@ -1,7 +1,6 @@
-import type { OrderStatus } from "@repo/db"
 import type { Balance, OnRampInr } from "../balance"
 import type { MintInput, Side } from "../market"
-import type { PlaceOrderInput } from "../order"
+import type { OrderStatus, PlaceOrderInput } from "../order"
 import type { Order, Trade } from "./state"
 
 export type InrBalanceMutation = Balance & { userId: string }

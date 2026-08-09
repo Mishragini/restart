@@ -1,4 +1,4 @@
-import { Side } from "@repo/db"
+import type { Side } from "../market"
 import type { Balance } from "../balance"
 import type { PlaceOrderInput } from "../order"
 

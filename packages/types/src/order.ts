@@ -1,6 +1,5 @@
 import z from "zod";
 import { Side } from "./market";
-import type { Order } from "@repo/db"
 
 export const OrderType = {
     BUY: "BUY",
@@ -16,7 +15,20 @@ export const OrderStatus = {
 } as const
 export type OrderStatus = (typeof OrderStatus)[keyof typeof OrderStatus]
 
-export type { Order }
+/** Mirrors the Prisma Order model — kept here so web can build without @repo/db. */
+export type Order = {
+    id: string
+    side: Side
+    price: number
+    quantity: number
+    filledQuantity: number
+    type: OrderType
+    status: OrderStatus
+    marketId: string
+    userId: string
+    createdAt: Date | string
+    updatedAt: Date | string
+}
 
 export const PlaceOrderSchema = z.object({
     price: z.number()

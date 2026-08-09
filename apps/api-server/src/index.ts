@@ -23,8 +23,6 @@ app.all('/api/auth/{*any}', toNodeHandler(auth));
 
 app.use(express.json())
 
-
-
 app.get("/api/me", async (req, res) => {
     const session = await auth.api.getSession({
         headers: fromNodeHeaders(req.headers)
@@ -40,7 +38,6 @@ app.get("/health", async (req, res) => {
         console.error(error);
         res.status(503).json({ status: "error", redis: "down" });
     }
-
 })
 
 app.use("/api/v1/pfp", pfpRouter)
@@ -49,18 +46,23 @@ app.use("/api/v1/categories", categoryRouter)
 app.use("/api/v1/balance", balanceRouter)
 app.use("/api/v1/orders", orderRouter)
 
-await connectRedis()
+async function main() {
+    await connectRedis()
 
+    app.listen(PORT, () => {
+        console.log(`Server is listening on ${PORT}`)
+    })
 
-app.listen(PORT, () => {
-    console.log(`Server is listening on ${PORT}`)
-})
+    schedule('0 0 0 * * *', async () => {
+        try {
+            await closeExpiredMarkets()
+        } catch (error) {
+            console.log(error)
+        }
+    })
+}
 
-
-schedule('0 0 0 * * *', async () => {
-    try {
-        await closeExpiredMarkets()
-    } catch (error) {
-        console.log(error)
-    }
+main().catch((error) => {
+    console.error(error)
+    process.exit(1)
 })

@@ -27,7 +27,7 @@ export const PlaceOrderSchema = z.object({
             "Price can have at most 2 decimal places",
         ),
     marketId: z.string().min(1, "MarketId is required"),
-    quantity: z.number().min(1, "Quantity be at least be one"),
+    quantity: z.number().int("Quantity must be a whole number").min(1, "Quantity must be at least one"),
     type: z.enum(OrderType),
     side: z.enum(Side)
 })

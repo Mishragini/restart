@@ -1,0 +1,15 @@
+{$DOMAIN:localhost} {
+	encode gzip
+
+	# HTTP API (better-auth + /api/v1/*)
+	handle /api* {
+		reverse_proxy api-server:3000
+	}
+
+	# WebSocket rooms: frontend connects to ${VITE_WS_URL}/markets/:id
+	handle /markets* {
+		reverse_proxy ws:8080
+	}
+
+	respond "probo backend ok" 200
+}

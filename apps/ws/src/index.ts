@@ -2,7 +2,7 @@ import WebSocket, { WebSocketServer } from "ws";
 import { RedisManager } from "./redisManager";
 
 const wss = new WebSocketServer({
-    port: 8080
+    port: Number(process.env.PORT) || 8080
 })
 
 const rooms = new Map<string, Set<WebSocket>>()

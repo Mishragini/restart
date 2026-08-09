@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { prisma } from "@repo/db";
+import { MarketStatus, prisma } from "@repo/db";
 import { type AuthenticatedRequest, authMiddleware, validate } from "../lib/middleware";
 import {
     GetUserOrdersSchema,
@@ -85,6 +85,21 @@ orderRouter.post("/place-order", authMiddleware, validate(PlaceOrderSchema), asy
     try {
         const input = req.validatedData as PlaceOrderInput
         const { id: userId } = req.user!
+
+        // Engine has no market metadata — gate closed/resolved markets here.
+        const market = await prisma.market.findUnique({
+            where: { id: input.marketId },
+            select: { status: true },
+        })
+        if (!market) {
+            res.status(404).json({ error: "Market not found" })
+            return
+        }
+        if (market.status !== MarketStatus.ACTIVE) {
+            res.status(400).json({ error: "Market is not open for trading" })
+            return
+        }
+
         const data = { ...input, price: toPaise(input.price) }
         const response = await RedisManager.getInstance().sendAndAwait(userId, "place_order", data)
         if ('error' in response) {

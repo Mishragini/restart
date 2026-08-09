@@ -1,0 +1,83 @@
+services:
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP: api-server
+    env_file: .env
+    command: ["pnpm", "--filter", "@repo/db", "db:deploy"]
+    restart: "no"
+
+  api-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP: api-server
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: "3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  ws:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP: ws
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: "8080"
+
+  engine:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP: engine
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  archiver:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP: archiver
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api-server
+      - ws
+
+volumes:
+  caddy_data:
+  caddy_config:

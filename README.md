@@ -1,32 +1,63 @@
-# `Turborepo` Vite starter
+# Probo Turbo
 
-This is a community-maintained example. If you experience a problem, please submit a pull request with a fix. GitHub Issues will be closed.
+Opinion-market exchange monorepo: API, matching engine, WebSocket fan-out, archiver, and Vite web app.
 
-## Using this example
+## Architecture
 
-Run the following command:
+![Architecture](docs/architecture.png)
 
-```sh
-npx create-turbo@latest -e with-vite-react
+| Piece | Role |
+| --- | --- |
+| **api-server** | Auth + HTTP API; enqueues engine work |
+| **engine** | In-memory orderbook / balances; publishes results |
+| **ws** | Live market updates to clients (Redis pub/sub) |
+| **archiver** | Consumes Redis stream → Postgres |
+| **web** | React (Vite) frontend |
+
+## Apps
+
+```
+apps/api-server   HTTP API + Better Auth
+apps/engine       Matching engine
+apps/ws           WebSocket server
+apps/archiver     Persistence worker
+apps/web          Frontend
 ```
 
-## What's inside?
+## Quick start
 
-This Turborepo includes the following packages and apps:
+**1. Env**
 
-### Apps and Packages
+```bash
+cp .env.example .env          # fill DATABASE_URL, REDIS_URL, auth, etc.
+cp apps/web/.env.example apps/web/.env
+```
 
-- `web`: react [vite](https://vitejs.dev) ts app
-- `@repo/ui`: a stub component library shared by `web` application
-- `@repo/eslint-config`: shared `eslint` configurations
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+**2. Backend (Docker)**
 
-Each package and app is 100% [TypeScript](https://www.typescriptlang.org/).
+```bash
+docker compose up -d --build
+```
 
-### Utilities
+- API: `http://localhost:3000`
+- WS: `ws://localhost:8080`
+- Caddy (optional): `http://localhost`
 
-This Turborepo has some additional tools already setup for you:
+**3. Frontend (local)**
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+```bash
+pnpm install
+pnpm --filter web dev
+```
+
+`apps/web/.env`:
+
+```
+VITE_BACKEND_BASE_URL=http://localhost:3000
+VITE_WS_URL=ws://localhost:8080
+```
+
+## Notes
+
+- Postgres + Redis are external (`DATABASE_URL`, `REDIS_URL` in `.env`).
+- Never commit `.env` files — use `.env.example` as the template.

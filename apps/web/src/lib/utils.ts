@@ -121,7 +121,7 @@ export const fetchMarket = async (marketId: string): Promise<Market> => {
     return data.data
 }
 
-export const formatMarketEndsAt = (endsAt: string) =>
+export const formatMarketEndsAt = (endsAt: string | Date) =>
     new Date(endsAt).toLocaleString()
 
 export const formatInr = (amount: number) =>

@@ -11,7 +11,9 @@ export const loadFromDb = async (): Promise<EngineState> => {
                 status: {
                     in: [OrderStatus.PENDING, OrderStatus.PARTIALLY_FULFILLED]
                 }
-            }
+            },
+            // FIFO within a price level depends on insertion order.
+            orderBy: { createdAt: "asc" }
         }),
         prisma.trade.findMany({
             include: { buyOrder: { select: { side: true } } },

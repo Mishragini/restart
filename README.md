@@ -6,13 +6,35 @@ Opinion-market exchange monorepo: API, matching engine, WebSocket fan-out, archi
 
 ![Architecture](docs/architecture.png)
 
+HTTP for mutations, an in-memory matching engine for the book, Redis for queue / pub-sub / stream / snapshot, WebSockets for live fans, and an archiver writing Postgres.
+
+```
+client ──HTTP──► api-server ──queue──► engine (in-memory db)
+                     │                    │
+                     │                    ├─ pub-sub ──► api-server (request reply)
+                     │                    ├─ pub-sub ──► ws ──► clients
+                     │                    ├─ redis stream ──► archiver ──► DB
+                     │                    └─ redis snapshot (engine hydrate)
+                     └── DB (auth, markets, reads)
+```
+
 | Piece | Role |
 | --- | --- |
-| **api-server** | Auth + HTTP API; enqueues engine work |
-| **engine** | In-memory orderbook / balances; publishes results |
-| **ws** | Live market updates to clients (Redis pub/sub) |
-| **archiver** | Consumes Redis stream → Postgres |
+| **api-server** | Auth + HTTP API; enqueues engine work; waits on per-request pub/sub reply |
+| **engine** | In-memory orderbook / balances; matches orders; publishes results |
+| **ws** | Live market updates to clients (`engine:ws` pub/sub) |
+| **archiver** | Consumes `engine:archiver` stream → Postgres |
 | **web** | React (Vite) frontend |
+
+**Redis contracts**
+
+| Kind | Key / channel | Purpose |
+| --- | --- | --- |
+| Queue (list) | `api_engine_queue` | api → engine requests |
+| Pub/sub | `<reqId>` | engine → api request–reply |
+| Pub/sub | `engine:ws` | engine → ws live market updates |
+| Stream | `engine:archiver` | engine → archiver persistence log |
+| Snapshot | `engine:snapshot` | engine crash recovery / hydrate |
 
 ## Apps
 

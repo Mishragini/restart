@@ -17,8 +17,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "ws": "^8.21.3",
+    "@repo/redis": "workspace:*",
+    "@repo/types": "workspace:^",
     "tsx": "^4.23.0",
-    "@repo/redis": "workspace:*"
+    "ws": "^8.21.3"
   }
 }

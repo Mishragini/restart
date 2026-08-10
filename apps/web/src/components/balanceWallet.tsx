@@ -14,7 +14,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 import {
   InputGroup,
   InputGroupAddon,
@@ -30,7 +35,7 @@ import {
 import { AmountPresets } from "@/components/amountPresets";
 import { fetchInrBalance, formatInr, onRampInr } from "@/lib/utils";
 
-const PRESET_AMOUNTS = [100, 500, 1000, 2000, 5000] as const;
+const PRESET_AMOUNTS = [50, 100, 200, 500] as const;
 
 export const BalanceWallet = () => {
   const queryClient = useQueryClient();
@@ -79,7 +84,11 @@ export const BalanceWallet = () => {
     >
       <DialogTrigger
         render={
-          <button type="button" className="balance-pill" aria-label="Open wallet">
+          <button
+            type="button"
+            className="balance-pill"
+            aria-label="Open wallet"
+          >
             <span className="balance-pill-label">Balance</span>
             <span className="balance-pill-amount">
               {isBalancePending ? "—" : formatInr(balance?.available ?? 0)}

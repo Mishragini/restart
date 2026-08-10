@@ -3,6 +3,7 @@ import { fromNodeHeaders, toNodeHandler } from "better-auth/node";
 import { FRONTEND_BASE_URL, PORT } from "./config"
 import { auth } from "./lib/auth";
 import cors from "cors"
+import helmet from "helmet"
 import { pfpRouter } from "./routes/pfp";
 import { marketRouter } from "./routes/market";
 import { categoryRouter } from "./routes/category";
@@ -11,17 +12,29 @@ import { schedule } from 'node-cron'
 import { closeExpiredMarkets } from "./jobs/closeExpiredMarkets";
 import { connectRedis, redis } from "@repo/redis";
 import { orderRouter } from "./routes/order";
+import { authLimiter, globalLimiter } from "./lib/rateLimit";
 
 const app = express()
+
+// Caddy sits in front — honor X-Forwarded-For for rate limits
+app.set("trust proxy", 1)
+
+app.use(helmet({
+    // API serves JSON; frontend is on a different origin (Vercel)
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+}))
 
 app.use(cors({
     origin: FRONTEND_BASE_URL,
     credentials: true
 }))
 
-app.all('/api/auth/{*any}', toNodeHandler(auth));
+app.use(globalLimiter)
 
-app.use(express.json())
+app.all('/api/auth/{*any}', authLimiter, toNodeHandler(auth));
+
+// Keep payloads small — cuts abuse + bandwidth cost
+app.use(express.json({ limit: "64kb" }))
 
 app.get("/api/me", async (req, res) => {
     const session = await auth.api.getSession({

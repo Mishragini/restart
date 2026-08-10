@@ -53,6 +53,9 @@ importers:
       express:
         specifier: ^5.2.1
         version: 5.2.1
+      helmet:
+        specifier: ^8.3.0
+        version: 8.3.0
       node-cron:
         specifier: ^4.6.0
         version: 4.6.0
@@ -228,6 +231,9 @@ importers:
       '@repo/redis':
         specifier: workspace:*
         version: link:../../packages/redis
+      '@repo/types':
+        specifier: workspace:^
+        version: link:../../packages/types
       bufferutil:
         specifier: ^4.0.1
         version: 4.1.0
@@ -984,7 +990,7 @@ packages:
       '@babel/parser': 7.29.0
       '@babel/template': 7.28.6
       '@babel/types': 7.29.0
-      debug: 4.4.0
+      debug: 4.4.3
     transitivePeerDependencies:
       - supports-color
 
@@ -4769,6 +4775,11 @@ packages:
     engines: {node: '>= 0.4'}
     dependencies:
       function-bind: 1.1.2
+    dev: false
+
+  /helmet@8.3.0:
+    resolution: {integrity: sha512-Qgpiaws3Sm30Av8Eah6sjMCZZwjlBu+E68rhpCWBshY1lb09HtLwj5GviX0OyQIn+ulUS0iX0AxN5n3tLZzz1w==}
+    engines: {node: '>=18.0.0'}
     dev: false
 
   /hono@4.12.29:

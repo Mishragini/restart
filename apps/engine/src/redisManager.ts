@@ -45,9 +45,13 @@ export class RedisManager {
 
     async publishToArchiver(message: EngineRes) {
         await this.connect()
-        await this.publisher.xAdd(ENGINE_ARCHIVER_STREAM, "*", {
-            payload: JSON.stringify(message),
-        })
+        // Approximate trim keeps Upstash memory / command cost bounded
+        await this.publisher.xAdd(
+            ENGINE_ARCHIVER_STREAM,
+            "*",
+            { payload: JSON.stringify(message) },
+            { TRIM: { strategy: "MAXLEN", strategyModifier: "~", threshold: 5_000 } },
+        )
     }
 
     async getSnapshot() {

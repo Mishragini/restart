@@ -1,10 +1,12 @@
 import z from "zod";
+import { ONRAMP_MAX_AMOUNT_INR } from "./limits";
 
 export const onRampInrSchema = z.object({
     amount: z
         .number()
         .positive("Amount must be greater than 0")
         .min(0.01, "Amount must be at least ₹0.01")
+        .max(ONRAMP_MAX_AMOUNT_INR, `Amount must be at most ₹${ONRAMP_MAX_AMOUNT_INR}`)
         .refine(
             (n) => Math.abs(n * 100 - Math.round(n * 100)) < 1e-8,
             "Amount can have at most 2 decimal places",

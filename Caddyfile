@@ -1,6 +1,11 @@
 {$DOMAIN:localhost} {
 	encode gzip
 
+	# Drop oversized request bodies early (before they hit Node / Redis / S3)
+	request_body {
+		max_size 64KB
+	}
+
 	# HTTP API (better-auth + /api/v1/*)
 	handle /api* {
 		reverse_proxy api-server:3000

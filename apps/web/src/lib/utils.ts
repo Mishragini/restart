@@ -10,6 +10,7 @@ import type { GetUserOrdersRes, Order, OrderStatus, PlaceOrderInput } from "@rep
 
 import axios from "axios"
 import { router } from "@/main";
+import { PFP_MAX_BYTES } from "@repo/types/limits"
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs))
@@ -61,18 +62,20 @@ export const signOut = async () => {
 }
 
 export const uploadToS3 = async (file: File) => {
-    console.log("backend url", import.meta.env.VITE_BACKEND_BASE_URL)
+    if (file.size > PFP_MAX_BYTES) {
+        throw new Error(`Image must be under ${Math.round(PFP_MAX_BYTES / 1024)}KB`)
+    }
+
     const {
         data: { uploadUrl, publicUrl },
     } = await axios.post(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/pfp/get-url`, {
         fileType: file.type,
-        fileName: file.name
     })
 
     await axios.put(uploadUrl, file, {
         headers: {
-            "Content-Type": file.type
-        }
+            "Content-Type": file.type,
+        },
     })
     return publicUrl
 }

@@ -11,6 +11,8 @@ import {
 import { prisma } from "@repo/db";
 import { RedisManager } from "../lib/redisManager";
 import { toPaise, toRupees } from "../lib/utils";
+import { writeLimiter } from "../lib/rateLimit";
+import { assertOnrampAllowed, recordOnramp } from "../lib/onrampGuard";
 
 export const balanceRouter: Router = Router()
 
@@ -73,31 +75,45 @@ balanceRouter.get("/stock", authMiddleware, validate(getStockBalanceSchema, "que
     }
 })
 
-balanceRouter.post("/webhook", authMiddleware, validate(onRampInrSchema), async (req: AuthenticatedRequest, res) => {
-    try {
-        const redisInstance = RedisManager.getInstance()
-        const { amount } = req.validatedData as OnRampInr
-        const { id: userId } = req.user!
-        const amountPaise = toPaise(amount)
-        const [balance] = await Promise.all([prisma.inrBalance.update({
-            where: {
-                userId
-            },
-            data: {
-                available: {
-                    increment: amountPaise
-                }
-            },
-            select: {
-                available: true,
-                locked: true,
-            },
-        }),
-        redisInstance.sendAndAwait(userId, "onramp_inr", { amount: amountPaise })
-        ])
-        res.status(200).json({ message: "Funds added successfully", data: balanceInRupees(balance) })
-    } catch (error) {
-        console.error(error)
-        res.status(500).json({ error: "Something went wrong :(. Please try again later" })
-    }
-})
+balanceRouter.post(
+    "/webhook",
+    authMiddleware,
+    writeLimiter,
+    validate(onRampInrSchema),
+    async (req: AuthenticatedRequest, res) => {
+        try {
+            const redisInstance = RedisManager.getInstance()
+            const { amount } = req.validatedData as OnRampInr
+            const { id: userId } = req.user!
+
+            const blocked = await assertOnrampAllowed(userId, amount)
+            if (blocked) {
+                res.status(429).json({ error: blocked })
+                return
+            }
+
+            const amountPaise = toPaise(amount)
+            const [balance] = await Promise.all([prisma.inrBalance.update({
+                where: {
+                    userId
+                },
+                data: {
+                    available: {
+                        increment: amountPaise
+                    }
+                },
+                select: {
+                    available: true,
+                    locked: true,
+                },
+            }),
+            redisInstance.sendAndAwait(userId, "onramp_inr", { amount: amountPaise })
+            ])
+            await recordOnramp(userId, amount)
+            res.status(200).json({ message: "Funds added successfully", data: balanceInRupees(balance) })
+        } catch (error) {
+            console.error(error)
+            res.status(500).json({ error: "Something went wrong :(. Please try again later" })
+        }
+    },
+)

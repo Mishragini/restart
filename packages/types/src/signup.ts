@@ -8,9 +8,9 @@ const signupSchema = z.object({
         .min(8, "Must be at least 8 characters")
         .regex(/[A-Z]/, "Must contain uppercase characters")
         .regex(/[0-9]/, "Must contain a number"),
-    name: z.string().min(2, "Must be at least 2 characters"),
+    name: z.string().min(2, "Must be at least 2 characters").max(64),
     image: z.string().optional(),
-    role: z.enum([Role.USER, Role.ADMIN], { message: "Select a role" })
+    role: z.enum([Role.USER, Role.ADMIN], { message: "Select a role" }),
 })
 
 type signup = z.infer<typeof signupSchema>

@@ -13,6 +13,7 @@
     "./category": "./src/category.ts",
     "./balance": "./src/balance.ts",
     "./order": "./src/order.ts",
+    "./limits": "./src/limits.ts",
     "./engine": "./src/engine/index.ts"
   },
   "devDependencies": {

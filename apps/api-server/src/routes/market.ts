@@ -6,13 +6,14 @@ import { closeExpiredMarkets } from "../jobs/closeExpiredMarkets";
 import { updateMarketStatus } from "../lib/settle";
 import { RedisManager } from "../lib/redisManager";
 import { toRupees } from "../lib/utils";
+import { writeLimiter } from "../lib/rateLimit";
 
 const isTerminalMarketStatus = (status: MarketStatus) =>
     status === MarketStatus.RESOLVED || status === MarketStatus.CANCELLED
 
 export const marketRouter: Router = Router()
 
-marketRouter.post("/create", authMiddleware, requireRole([Role.ADMIN]), validate(CreateMarketSchema), async (req: AuthenticatedRequest, res) => {
+marketRouter.post("/create", authMiddleware, requireRole([Role.ADMIN]), writeLimiter, validate(CreateMarketSchema), async (req: AuthenticatedRequest, res) => {
     try {
         const { title, description, sourceOfTruth, categoryIds, endsAt } = req.validatedData as CreateMarketInput
         const { id: userId } = req.user!
@@ -95,6 +96,7 @@ marketRouter.patch(
     "/:marketId/status",
     authMiddleware,
     requireRole([Role.ADMIN]),
+    writeLimiter,
     validate(UpdateMarketStatusSchema),
     async (req: AuthenticatedRequest, res) => {
         try {
@@ -128,7 +130,7 @@ marketRouter.patch(
 /** Complete set (1 Yes + 1 No) costs ₹10 → stored as paise, matching InrBalance. */
 const MINT_COST_PER_PAIR_PAISE = 1000
 
-marketRouter.post("/mint", authMiddleware, requireRole([Role.ADMIN]), validate(MintSchema), async (req: AuthenticatedRequest, res) => {
+marketRouter.post("/mint", authMiddleware, requireRole([Role.ADMIN]), writeLimiter, validate(MintSchema), async (req: AuthenticatedRequest, res) => {
     try {
         const redisInstance = RedisManager.getInstance()
         const { amount, marketId } = req.validatedData as MintInput

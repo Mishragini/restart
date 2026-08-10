@@ -2,10 +2,11 @@ import { Router } from "express";
 import { requireRole, type AuthenticatedRequest, validate, authMiddleware } from "../lib/middleware";
 import { prisma, Role } from "@repo/db";
 import { category, CategorySchema } from "@repo/types/category";
+import { writeLimiter } from "../lib/rateLimit";
 
 export const categoryRouter: Router = Router()
 
-categoryRouter.post("/create", authMiddleware, requireRole([Role.ADMIN]), validate(CategorySchema), async (req: AuthenticatedRequest, res) => {
+categoryRouter.post("/create", authMiddleware, requireRole([Role.ADMIN]), writeLimiter, validate(CategorySchema), async (req: AuthenticatedRequest, res) => {
     try {
         const { name } = req.validatedData as category
 

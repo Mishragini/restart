@@ -1,3 +1,10 @@
+x-logging: &default-logging
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
 services:
   migrate:
     build:
@@ -8,6 +15,7 @@ services:
     env_file: .env
     command: ["pnpm", "--filter", "@repo/db", "db:deploy"]
     restart: "no"
+    <<: *default-logging
 
   api-server:
     build:
@@ -24,6 +32,7 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
+    <<: *default-logging
 
   ws:
     build:
@@ -37,6 +46,8 @@ services:
       - "8080:8080"
     environment:
       PORT: "8080"
+      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-}
+    <<: *default-logging
 
   engine:
     build:
@@ -49,6 +60,7 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
+    <<: *default-logging
 
   archiver:
     build:
@@ -61,6 +73,7 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
+    <<: *default-logging
 
   caddy:
     image: caddy:2-alpine
@@ -77,6 +90,7 @@ services:
     depends_on:
       - api-server
       - ws
+    <<: *default-logging
 
 volumes:
   caddy_data:

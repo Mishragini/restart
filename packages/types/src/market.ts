@@ -1,9 +1,21 @@
 import z from "zod";
+import {
+    MARKET_DESCRIPTION_MAX,
+    MARKET_TITLE_MAX,
+    MINT_MAX_AMOUNT,
+} from "./limits";
+
 export const CreateMarketSchema = z.object({
-    title: z.string().min(3, "Must be at least 3 characters long"),
-    description: z.string().optional(),
+    title: z
+        .string()
+        .min(3, "Must be at least 3 characters long")
+        .max(MARKET_TITLE_MAX, `Title must be at most ${MARKET_TITLE_MAX} characters`),
+    description: z
+        .string()
+        .max(MARKET_DESCRIPTION_MAX, `Description must be at most ${MARKET_DESCRIPTION_MAX} characters`)
+        .optional(),
     sourceOfTruth: z.url("Must be a valid URL"),
-    categoryIds: z.array(z.string()).min(1, "Select at least one category"),
+    categoryIds: z.array(z.string()).min(1, "Select at least one category").max(20),
     endsAt: z.string()
         .min(1, "End date is required")
         .refine((val) => new Date(val).getTime() > Date.now(), "Must be a future date and time")
@@ -80,7 +92,10 @@ export type Market = {
 
 
 export const MintSchema = z.object({
-    amount: z.int("Must be an integer").min(1, "Must be at least one."),
+    amount: z
+        .int("Must be an integer")
+        .min(1, "Must be at least one.")
+        .max(MINT_MAX_AMOUNT, `Amount must be at most ${MINT_MAX_AMOUNT}`),
     marketId: z.string().min(1, "Market ID is required")
 })
 

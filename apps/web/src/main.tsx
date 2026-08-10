@@ -11,7 +11,16 @@ import Dashboard from "./components/dashboard";
 import MarketPage from "./components/market";
 import { GuestOnly, RequireAuth } from "./components/auth/RequireAuth";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Cut focus-refetch thrash → fewer API / Redis / DB hits on free tier
+      staleTime: 30_000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 const Root = () => (
   <QueryClientProvider client={queryClient}>

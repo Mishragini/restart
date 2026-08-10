@@ -26,6 +26,7 @@ import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheckBig, Loader2, TriangleAlert } from "lucide-react";
 import { useAuthErrorFromSearchParams } from "@/hooks/useAuthErrorFromSearchParams";
+import { PFP_MAX_BYTES } from "@repo/types/limits";
 import { Role } from "@repo/types/user";
 
 export const Signup = () => {
@@ -78,6 +79,11 @@ export const Signup = () => {
 
       if (!file.type.startsWith("image/")) {
         toast.error("Must be an image.");
+        return;
+      }
+
+      if (file.size > PFP_MAX_BYTES) {
+        toast.error(`Image must be under ${Math.round(PFP_MAX_BYTES / 1024)}KB.`);
         return;
       }
 
@@ -149,7 +155,7 @@ export const Signup = () => {
               <Input
                 onChange={handleImageUpload}
                 id="input-field-image"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp"
                 type="file"
                 hidden
                 cursor-pointer

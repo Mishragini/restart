@@ -13,6 +13,8 @@ import {
 } from "@repo/types/order";
 import { RedisManager } from "../lib/redisManager";
 import { orderbookInRupees, placeOrderResInRupees, toPaise, toRupees, tradesInRupees } from "../lib/utils";
+import { writeLimiter } from "../lib/rateLimit";
+import { TRADES_TAKE, USER_ORDERS_TAKE } from "@repo/types/limits";
 
 export const orderRouter: Router = Router()
 
@@ -48,9 +50,10 @@ orderRouter.get("/trades", authMiddleware, validate(getTradesSchema, "query"), a
         if (engine_response.type !== "get_trades") {
             throw new Error("Unexpected engine response")
         }
+        const trades = engine_response.data.trades.slice(0, TRADES_TAKE)
         res.json({
             message: engine_response.message,
-            data: tradesInRupees(engine_response.data),
+            data: tradesInRupees({ ...engine_response.data, trades }),
         })
     } catch (error) {
         console.error(error)
@@ -70,6 +73,7 @@ orderRouter.get("/user", authMiddleware, validate(GetUserOrdersSchema, "query"),
                 ...(status && { status }),
             },
             orderBy: { createdAt: "desc" },
+            take: USER_ORDERS_TAKE,
         })
 
         res.status(200).json({
@@ -81,7 +85,7 @@ orderRouter.get("/user", authMiddleware, validate(GetUserOrdersSchema, "query"),
     }
 })
 
-orderRouter.post("/place-order", authMiddleware, validate(PlaceOrderSchema), async (req: AuthenticatedRequest, res) => {
+orderRouter.post("/place-order", authMiddleware, writeLimiter, validate(PlaceOrderSchema), async (req: AuthenticatedRequest, res) => {
     try {
         const input = req.validatedData as PlaceOrderInput
         const { id: userId } = req.user!

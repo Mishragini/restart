@@ -6,7 +6,8 @@ const BETTER_AUTH_SECRET = process.env.BETTER_AUTH_SECRET || ""
 const BETTER_AUTH_URL = process.env.BETTER_AUTH_URL || ""
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || ""
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || ""
-const FRONTEND_BASE_URL = process.env.FRONTEND_BASE_URL || ""
+// CORS Origin must match exactly (no trailing slash). Browsers send Origin without one.
+const FRONTEND_BASE_URL = (process.env.FRONTEND_BASE_URL || "").replace(/\/$/, "")
 const S3_BUCKET_NAME = process.env.S3_BUCKET_NAME || ""
 const S3_BUCKET_REGION = process.env.S3_BUCKET_REGION || ""
 const IAM_USER_ACCESS_KEY = process.env.IAM_USER_ACCESS_KEY || ""
